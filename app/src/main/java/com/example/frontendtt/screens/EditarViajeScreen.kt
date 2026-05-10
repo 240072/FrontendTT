@@ -242,10 +242,20 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                 OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedCard(onClick = { showInicioPicker = true }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
+                    OutlinedCard(
+                        onClick = { showInicioPicker = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.outlinedCardColors(containerColor = Color.White)
+                    ) {
                         Column(modifier = Modifier.padding(12.dp)) { Text("Inicio", style = MaterialTheme.typography.labelSmall, color = Color.Gray); Text(horaInicio, fontWeight = FontWeight.Bold) }
                     }
-                    OutlinedCard(onClick = { showFinPicker = true }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
+                    OutlinedCard(
+                        onClick = { showFinPicker = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.outlinedCardColors(containerColor = Color.White)
+                    ) {
                         Column(modifier = Modifier.padding(12.dp)) { Text("Fin", style = MaterialTheme.typography.labelSmall, color = Color.Gray); Text(horaFin, fontWeight = FontWeight.Bold) }
                     }
                 }

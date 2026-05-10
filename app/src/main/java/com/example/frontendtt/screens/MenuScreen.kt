@@ -146,7 +146,7 @@ fun MenuScreen(navController: NavController) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.tu_logo),
+                    painter = painterResource(id = R.drawable.fondott),
                     contentDescription = "Mis Viajes",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -168,7 +168,7 @@ fun MenuScreen(navController: NavController) {
 
             /* 📅 SELECTOR FECHAS */
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp)
             ) {
@@ -239,7 +239,7 @@ fun MenuScreen(navController: NavController) {
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f))
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -294,7 +294,7 @@ fun MenuScreen(navController: NavController) {
                             navController.navigate(AppScreens.ViajeScreen.route)
                         },
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White.copy(alpha = 0.95f)
+                            containerColor = Color.White
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {

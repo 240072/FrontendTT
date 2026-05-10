@@ -112,8 +112,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                             unfocusedBorderColor = TravelPrimaryBlue.copy(alpha = 0.3f),
                             focusedLabelColor = TravelPrimaryBlue,
                             cursorColor = TravelPrimaryBlue,
-                            focusedContainerColor = Color.White.copy(alpha = 0.7f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.7f)
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         )
                     )
 
@@ -129,8 +129,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                             unfocusedBorderColor = TravelPrimaryBlue.copy(alpha = 0.3f),
                             focusedLabelColor = TravelPrimaryBlue,
                             cursorColor = TravelPrimaryBlue,
-                            focusedContainerColor = Color.White.copy(alpha = 0.7f),
-                            unfocusedContainerColor = Color.White.copy(alpha = 0.7f)
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         )
                     )
 

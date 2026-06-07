@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
-
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,19 +20,33 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import com.example.frontendtt.R
 import com.example.frontendtt.components.PrimaryTravelButton
 import com.example.frontendtt.components.SecondaryTravelButton
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.LoginViewModel
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
+// import com.example.frontendtt.viewmodels.LoginViewModel
+import com.example.traveltogethersupabase.network.SupabaseClient.supabase
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
+import kotlin.time.Duration
 
 @Composable
 fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
-
+    // val loginViewModel: LoginViewModel = viewModel()
+    val loginState by loginViewModel.loginState.collectAsState()
+    
     var showLogin by remember { mutableStateOf(false) }
-    var user by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = TravelSkyBlue
@@ -102,8 +116,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                     )
 
                     OutlinedTextField(
-                        value = user,
-                        onValueChange = { user = it },
+                        value = loginState.correo,
+                        onValueChange = { loginViewModel.onCorreoChange(it) },
                         label = { Text("Usuario") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -118,8 +132,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                     )
 
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
+                        value = loginState.password,
+                        onValueChange = { loginViewModel.onPasswordChange(it) },
                         label = { Text("Contraseña") },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -136,7 +150,20 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
 
                     PrimaryTravelButton(
                         text = "Aceptar",
-                        onClick = { navController.navigate(AppScreens.MenuScreen.route) }
+                        onClick = {
+
+                scope.launch {
+                    try {
+                    supabase.auth.signInWith(Email) {
+                        email = loginState.correo
+                        password = loginState.password
+                    }
+                        navController.navigate(AppScreens.MenuScreen.route)
+                    } catch (e: Exception) {
+                        Toast.makeText(context,"Error al loguearse", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
                     )
 
                     SecondaryTravelButton(

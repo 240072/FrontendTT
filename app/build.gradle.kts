@@ -39,6 +39,7 @@ android {
     }
 }
 
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -56,6 +57,15 @@ dependencies {
     implementation(libs.osmdroid)
     implementation(libs.play.services.location)
     implementation(libs.androidx.core.splashscreen)
+    implementation("io.github.jan-tennert.supabase:supabase-kt:3.0.0")
+implementation("io.github.jan-tennert.supabase:postgrest-kt:3.0.0")
+implementation("io.github.jan-tennert.supabase:auth-kt:3.0.0")
+// implementation("io.ktor:ktor-client-android:2.3.12")
+implementation("io.ktor:ktor-client-okhttp:3.0.0")
+// implementation("io.ktor:ktor-client-plugins:2.3.12")
+implementation("com.google.android.gms:play-services-auth:21.2.0")
+
+    
     // Ciclo de vida
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")

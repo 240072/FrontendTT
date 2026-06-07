@@ -21,31 +21,34 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import android.util.Log
+
 import com.example.frontendtt.ui.theme.*
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
+import com.example.traveltogethersupabase.data.Tabaco.opcionesTabaco
+import com.example.traveltogethersupabase.data.Mascota.opcionesMascota
+import com.example.frontendtt.viewmodels.LoginViewModel
+import com.example.traveltogethersupabase.network.SupabaseClient.supabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 @Composable
 fun RegisterScreen(navController: NavController) {
 
-    // Estados de los campos de texto
-    var nombre by remember { mutableStateOf("") }
-    var alias by remember { mutableStateOf("") }
-    var correo by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val loginViewModel: LoginViewModel = viewModel()
+    val loginState by loginViewModel.loginState.collectAsState()
+    
 
-    // Estado Mascotas
-    val opcionesMascotas = listOf(
-        "Me Encantan", "Asistencia", "No puedo viajar sin ella",
-        "Soy Alérgico", "No me gustan los animales", "No son un problema"
-    )
-    var mascotaSeleccionada by remember { mutableStateOf<String?>(null) }
+    
+    val mascotaSeleccionada = loginState.petOption
 
-    // Estado Tabaco
-    val opcionesTabaco = listOf(
-        "Fumador", "No Fumador", "No fumo pero no me importa"
-    )
-    var tabacoSeleccionado by remember { mutableStateOf<String?>(null) }
-
+    
+    val tabacoSeleccionado = loginState.tobaccoOption
+    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     Box(
@@ -88,29 +91,29 @@ fun RegisterScreen(navController: NavController) {
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         OutlinedTextField(
-                            value = nombre,
-                            onValueChange = { nombre = it },
+                            value = loginState.name,
+                            onValueChange = { loginViewModel.onNameChange(it) },
                             label = { Text("Nombre") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
                         OutlinedTextField(
-                            value = alias,
-                            onValueChange = { alias = it },
+                            value = loginState.alias,
+                            onValueChange = { loginViewModel.onAliasChange(it) },
                             label = { Text("Alias") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
                         OutlinedTextField(
-                            value = correo,
-                            onValueChange = { correo = it },
+                            value = loginState.correo,
+                            onValueChange = { loginViewModel.onCorreoChange(it) },
                             label = { Text("Correo") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
                         OutlinedTextField(
-                            value = password,
-                            onValueChange = { password = it },
+                            value = loginState.password,
+                            onValueChange = { loginViewModel.onPasswordChange(it) },
                             label = { Text("Contraseña") },
                             visualTransformation = PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth(),
@@ -145,20 +148,27 @@ fun RegisterScreen(navController: NavController) {
                                 .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            opcionesMascotas.forEach { opcion ->
-                                FilterChip(
-                                    selected = (opcion == mascotaSeleccionada),
-                                    onClick = { 
-                                        mascotaSeleccionada = if (mascotaSeleccionada == opcion) null else opcion 
-                                    },
-                                    label = { Text(opcion, fontSize = 12.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TravelPrimaryBlue,
-                                        selectedLabelColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                            }
+                            opcionesMascota.forEach { (texto, valor) ->
+    FilterChip(
+        selected = (valor == mascotaSeleccionada),
+        onClick = {
+            loginViewModel.onPetOptionChange(
+                if (mascotaSeleccionada == valor) null else valor
+            )
+        },
+        label = {
+            Text(
+                text = texto,
+                fontSize = 12.sp
+            )
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = TravelPrimaryBlue,
+            selectedLabelColor = Color.White
+        ),
+        shape = RoundedCornerShape(10.dp)
+    )
+}
                         }
                     }
                 }
@@ -189,27 +199,75 @@ fun RegisterScreen(navController: NavController) {
                                 .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            opcionesTabaco.forEach { opcion ->
-                                FilterChip(
-                                    selected = (opcion == tabacoSeleccionado),
-                                    onClick = { 
-                                        tabacoSeleccionado = if (tabacoSeleccionado == opcion) null else opcion 
-                                    },
-                                    label = { Text(opcion, fontSize = 12.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = TravelPrimaryBlue,
-                                        selectedLabelColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                            }
+           opcionesTabaco.forEach { (texto, valor) ->
+    FilterChip(
+        selected = (valor == tabacoSeleccionado),
+        onClick = {
+            loginViewModel.onTobaccoOptionChange(
+                if (tabacoSeleccionado == valor) null else valor
+            )
+        },
+        label = {
+            Text(
+                text = texto,
+                fontSize = 12.sp
+            )
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = TravelPrimaryBlue,
+            selectedLabelColor = Color.White
+        ),
+        shape = RoundedCornerShape(10.dp)
+    )
+}
+                            
                         }
                     }
                 }
 
 
                 Button(
-                    onClick = { navController.navigate(AppScreens.LoginScreen.route) },
+                    onClick = { scope.launch {
+                    try {
+                        // 1. Registrar en Auth (Esto crea el UUID en el esquema privado)
+                        val user = supabase.auth.signUpWith(Email) {
+                            email = loginState.correo
+                            password = loginState.password
+
+                            // PASO CRÍTICO: Enviar metadatos para que el Trigger de SQL los reciba
+                            data = buildJsonObject {
+                                put("alias", loginState.alias)
+                                put("nombre", loginState.name)
+                                put("tabaco", tabacoSeleccionado)
+                                put("mascota", mascotaSeleccionada)
+                            }
+                        }
+
+                        // 2. ¿Necesitas llamar a enviarRegistro()?
+                        // Si configuraste el TRIGGER que te pasé antes en SQL,
+                        // ¡YA NO ES NECESARIO! El Trigger lo hace solo.
+
+                        // Si NO usas trigger, tendrías que hacerlo así:
+                        /*
+                        val userId = user?.id ?: return@launch
+                        val nuevoUsuario = RegistroUsuario(
+                            id = userId, // Usamos el UUID real
+                            alias = loginState.alias,
+                            ...
+                        )
+                        enviarRegistro(nuevoUsuario)
+                        */
+
+                        Log.i("TAG","Registro exitoso para: ${user?.email}")
+
+    } catch (e: io.github.jan.supabase.exceptions.RestException) {
+    // .toString() en las excepciones de Supabase suele formatear el JSON del error completo
+    Log.e("TAG", "RestException detectado: ${e.toString()}")
+    Log.e("TAG", "Mensaje del error: ${e.message}")
+} catch (e: Exception) {
+    Log.e("TAG", "Error inesperado no relacionado con Supabase", e)
+}
+                } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

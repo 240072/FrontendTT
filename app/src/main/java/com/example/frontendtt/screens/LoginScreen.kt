@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -158,6 +159,15 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                         email = loginState.correo
                         password = loginState.password
                     }
+                        Log.d(
+                            "AUTH",
+                            "session=${supabase.auth.currentSessionOrNull()}"
+                        )
+
+                        Log.d(
+                            "AUTH",
+                            "user=${supabase.auth.currentUserOrNull()}"
+                        )
                         navController.navigate(AppScreens.MenuScreen.route)
                     } catch (e: Exception) {
                         Toast.makeText(context,"Error al loguearse", Toast.LENGTH_SHORT).show()

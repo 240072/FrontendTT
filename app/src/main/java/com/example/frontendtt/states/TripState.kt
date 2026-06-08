@@ -7,9 +7,9 @@ import java.sql.Date
 data class TripState (
     val nombre: String = "",
     val descripcion: String = "",
-    val participantes: Int = 0,
-    val fechaInicio: Date = Date.valueOf(java.time.LocalDate.now().toString()),
-    val fechaFin: Date = Date.valueOf(java.time.LocalDate.now().toString()),
+    val participantes: Int = 1,
+    val fechaInicio: Date? = null,
+    val fechaFin: Date? = null,
     val tabaco: Boolean = false,
-    val mascota: String = "",
+    val mascota: String = "NO",
 )

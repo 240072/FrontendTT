@@ -18,8 +18,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.ui.theme.*
+import com.example.frontendtt.viewmodels.ListaViajesViewModel
+import com.example.frontendtt.viewmodels.LoginViewModel
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import kotlinx.coroutines.launch
 
@@ -35,6 +39,12 @@ data class UserTrip(
 @Composable
 fun ListaViajesScreen(navController: NavController) {
 
+    val listaViajesViewModel: ListaViajesViewModel = viewModel()
+    LaunchedEffect(Unit) {
+        listaViajesViewModel.cargarViajes()
+    }
+
+    val viajes = listaViajesViewModel.viajesState
     var listaViajes by remember {
         mutableStateOf(
             listOf(
@@ -46,7 +56,7 @@ fun ListaViajesScreen(navController: NavController) {
         )
     }
 
-    var viajeAEliminar by remember { mutableStateOf<UserTrip?>(null) }
+    var viajeAEliminar by remember { mutableStateOf<ListaViajes?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -99,7 +109,7 @@ fun ListaViajesScreen(navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
-                    items(listaViajes, key = { it.id }) { viaje ->
+                    items(viajes, key = { it.id }) { viaje ->
                         Card(
                             onClick = { navController.navigate(AppScreens.ViajeScreen.route) },
                             modifier = Modifier.fillMaxWidth(),
@@ -111,7 +121,7 @@ fun ListaViajesScreen(navController: NavController) {
                                 Column(modifier = Modifier.padding(20.dp).padding(end = 40.dp)) {
                                     Text(text = viaje.nombre, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TravelDeepNavy)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(text = viaje.descripcion, style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+                                    viaje.descripcion?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray) }
                                 }
                                 IconButton(
                                     onClick = { viajeAEliminar = viaje },
@@ -133,10 +143,11 @@ fun ListaViajesScreen(navController: NavController) {
                 text = { Text("¿Estás seguro de que quieres abandonar el viaje \"${viajeAEliminar?.nombre}\"?") },
                 confirmButton = {
                     TextButton(onClick = {
-                        val nombreViaje = viajeAEliminar?.nombre
-                        listaViajes = listaViajes.filter { it.id != viajeAEliminar?.id }
+                        //val nombreViaje = viajeAEliminar?.nombre
+                        //listaViajes = listaViajes.filter { it.id != viajeAEliminar?.id }
+                        listaViajesViewModel.deleteTrip(viajeAEliminar?.id ?: 0)
                         viajeAEliminar = null
-                        scope.launch { snackbarHostState.showSnackbar("Has abandonado el viaje $nombreViaje") }
+                        scope.launch { snackbarHostState.showSnackbar("Has abandonado el viaje $viajeAEliminar?.nombre") }
                     }) { Text("Confirmar", color = Color.Red) }
                 },
                 dismissButton = {

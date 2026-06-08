@@ -1,9 +1,10 @@
-package com.example.traveltogethersupabase.data
+package com.example.frontendtt.data
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class NuevoViaje(
+data class ListaViajes(
+    val id: Int,
     val idcreador: String,
     val nombre: String,
     val descripcion: String?,

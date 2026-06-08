@@ -13,10 +13,12 @@ fun showDatePicker(
     DatePickerDialog(
         context,
         { _, year, month, day ->
-            val selected = Calendar.getInstance()
-            selected.set(year, month, day)
-            val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-            onDateSelected(format.format(selected.time))
+            val fecha = "%04d-%02d-%02d".format(
+                year,
+                month + 1,
+                day
+            )
+            onDateSelected(fecha)
         },
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH),

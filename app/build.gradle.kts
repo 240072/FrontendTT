@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.4.0"
+    
+
+
 }
 
 android {
@@ -64,6 +68,7 @@ implementation("io.github.jan-tennert.supabase:auth-kt:3.0.0")
 implementation("io.ktor:ktor-client-okhttp:3.0.0")
 // implementation("io.ktor:ktor-client-plugins:2.3.12")
 implementation("com.google.android.gms:play-services-auth:21.2.0")
+implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     
     // Ciclo de vida

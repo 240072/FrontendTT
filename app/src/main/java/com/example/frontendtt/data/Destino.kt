@@ -3,11 +3,11 @@ package com.example.frontendtt.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ListaViajes(
+data class Destino(
     val id: Int,
-    val idcreador: String,
     val nombre: String,
     val descripcion: String?,
-
-
+    val coordx: Double,
+    val coordy: Double,
+    val dificultad: Int
 )

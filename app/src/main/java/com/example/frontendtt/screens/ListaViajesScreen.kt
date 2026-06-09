@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -111,7 +112,7 @@ fun ListaViajesScreen(navController: NavController) {
                 ) {
                     items(viajes, key = { it.id }) { viaje ->
                         Card(
-                            onClick = { navController.navigate(AppScreens.ViajeScreen.route) },
+                            onClick = { navController.navigate(AppScreens.ViajeScreen.route.replace("{viajeId}", viaje.id.toString())) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White),

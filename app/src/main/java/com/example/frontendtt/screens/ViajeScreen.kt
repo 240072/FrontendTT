@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,10 +19,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontendtt.components.DestinoItem
 import com.example.frontendtt.components.SectionHeader
 import com.example.frontendtt.ui.theme.*
+import com.example.frontendtt.viewmodels.ViajeViewModel
+import com.example.traveltogethersupabase.network.SupabaseClient.supabase
+import io.github.jan.supabase.auth.auth
 
 /* -----------------------------------------------------------------------------
     MODELOS DE DATOS
@@ -45,20 +50,26 @@ data class Destino(
 )
 
 @Composable
-fun ViajeScreen(navController: NavController) {
-    val viaje = TripInfo(
-        nombre = "Expedición Pirineos 2024",
-        descripcion = "Una aventura épica cruzando los valles más profundos y las cimas más altas. Preparados para la libertad.",
-        fechaInicio = "15 Ago 2024",
-        fechaFin = "22 Ago 2024"
-    )
+fun ViajeScreen(viajeId: Int, navController: NavController) {
 
-    val participantes = listOf(
-        Participante(1, "Álex Aventurero"),
-        Participante(2, "Marta Maps"),
-        Participante(3, "Dani Cimas"),
-        Participante(4, "Sofía Trekking")
-    )
+    val viajeViewModel: ViajeViewModel = viewModel()
+    val miUserId = remember { supabase.auth.currentUserOrNull()?.id }
+
+    LaunchedEffect(viajeId) {
+        viajeViewModel.getTrip(viajeId)
+        viajeViewModel.getParticipants(viajeId,miUserId)
+        viajeViewModel.getStages(viajeId)
+
+
+
+    }
+    val participantes = viajeViewModel.participantesState
+    val etapas = viajeViewModel.etapasState
+    val viaje = viajeViewModel.viajeState
+
+    //val viaje = TripInfo(nombre = "Expedición Pirineos 2024", descripcion = "Una aventura épica cruzando los valles más profundos y las cimas más altas. Preparados para la libertad.", fechaInicio = "15 Ago 2024", fechaFin = "22 Ago 2024")
+
+    //val participantes = listOf(Participante(1, "Álex Aventurero"),Participante(2, "Marta Maps"), Participante(3, "Dani Cimas"), Participante(4, "Sofía Trekking"))
 
     val destinos = listOf(
         Destino("Valle de Ordesa", "Parque Nacional con cascadas impresionantes.", "09:00 - 18:00", "Torla, Huesca", "Media"),
@@ -68,9 +79,14 @@ fun ViajeScreen(navController: NavController) {
 
     var destinoSeleccionado by remember { mutableStateOf<Destino?>(null) }
     val scrollState = rememberScrollState()
-    val currentUserAlias = "AventureroInvitado" 
-    val yaParticipa = participantes.any { it.alias == currentUserAlias }
+    //val currentUserAlias = "AventureroInvitado"
 
+
+    //val yaParticipa = participantes.any { it.id == userId }
+    Log.d("Info",participantes.toString())
+    Log.d("info", viaje.toString())
+    Log.d("Info", etapas.toString())
+    Log.d("Info", viajeViewModel.yaParticipa.toString())
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -110,17 +126,19 @@ fun ViajeScreen(navController: NavController) {
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = viaje.descripcion,
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = TextAlign.Center,
-                            color = TravelEarth
-                        )
+                        viaje.descripcion?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                color = TravelEarth
+                            )
+                        }
                     }
                 }
 
                 /* 🔘 BOTÓN UNIRME */
-                if (!yaParticipa) {
+                if (!viajeViewModel.yaParticipa) {
                     Button(
                         onClick = { /* Acción */ },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -148,7 +166,7 @@ fun ViajeScreen(navController: NavController) {
                             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Person, contentDescription = null, tint = TravelPrimaryBlue)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text(text = participante.alias, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                                Text(text = participante.nombre, fontWeight = FontWeight.Bold, color = Color.DarkGray)
                             }
                         }
                     }
@@ -169,8 +187,8 @@ fun ViajeScreen(navController: NavController) {
                         Icon(Icons.Default.DateRange, contentDescription = null, tint = TravelDeepNavy, modifier = Modifier.size(32.dp))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text("Desde: ${viaje.fechaInicio}", fontWeight = FontWeight.Medium)
-                            Text("Hasta: ${viaje.fechaFin}", fontWeight = FontWeight.Medium)
+                            Text("Desde: ${viaje.fechainicio}", fontWeight = FontWeight.Medium)
+                            Text("Hasta: ${viaje.fechafin}", fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -181,12 +199,14 @@ fun ViajeScreen(navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    destinos.forEach { destino ->
+                    etapas.forEach { destino ->
                         DestinoItem(
-                            nombre = destino.nombre,
-                            hora = destino.hora,
-                            ubicacion = destino.ubicacion,
-                            onClick = { destinoSeleccionado = destino }
+                            nombre = destino.destino.nombre,
+                            hora = destino.horainicio,
+                            ubicacion = destino.destino.coordx.toString(),
+                            onClick = { destinoSeleccionado =
+                                (destino.destino ?: null) as Destino?
+                            }
                         )
                     }
                 }
@@ -208,16 +228,16 @@ fun ViajeScreen(navController: NavController) {
             title = { Text(destino.nombre, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(destino.descripcion)
+                    destino.descripcion?.let { Text(it) }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = Color.Gray.copy(alpha = 0.2f))
-                    Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text(destino.hora) }
+                    Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text(destino.nombre) }
                     Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); Text(destino.ubicacion) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Dificultad: ", fontWeight = FontWeight.Bold)
                         val (emoji, color) = when (destino.dificultad) {
-                            "Alta" -> "🔴" to Color.Red
-                            "Media" -> "🟠" to Color(0xFFF57C00)
-                            "Baja" -> "🟢" to TravelPrimaryBlue
+                            "0" -> "🔴" to Color.Red
+                            "1" -> "🟠" to Color(0xFFF57C00)
+                            "2" -> "🟢" to TravelPrimaryBlue
                             else -> "⚪" to Color.Gray
                         }
                         Text("$emoji ${destino.dificultad}", color = color, fontWeight = FontWeight.Bold)

@@ -7,5 +7,5 @@ sealed class AppScreens (val route: String){
     object MenuScreen: AppScreens (route = "menu_screen")
     object ListaViajesScreen: AppScreens (route = "lista_viajes_screen")
     object NuevoViajeScreen: AppScreens (route = "nuevo_viaje_screen")
-    object EditarViajeScreen: AppScreens (route = "editar_viaje_screen")
+    object EditarViajeScreen: AppScreens (route = "editar_viaje_screen/{viajeId}")
 }

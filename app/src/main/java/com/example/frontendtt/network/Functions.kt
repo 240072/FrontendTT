@@ -5,8 +5,11 @@ import com.example.frontendtt.data.DetalleViaje
 import com.example.frontendtt.data.Etapa
 import com.example.frontendtt.data.EtapaDetalle
 import com.example.frontendtt.data.ListaViajes
+import com.example.frontendtt.data.NuevaEtapa
+import com.example.frontendtt.data.NuevoDestino
 import com.example.frontendtt.data.ParticipacionConUsuario
 import com.example.frontendtt.data.UsuarioNombre
+import com.example.frontendtt.data.Viaje
 import com.example.traveltogethersupabase.data.NuevoViaje
 import com.example.traveltogethersupabase.data.RegistroUsuario
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
@@ -25,13 +28,47 @@ suspend fun enviarRegistro(usuario: RegistroUsuario) {
         // Aquí podrías manejar el error (ej. falta de internet)
     }
 }
-suspend fun registrarViaje(viaje: NuevoViaje) {
-    try {
-        supabase.from("viaje").insert(viaje)
-        // Si llegas aquí, se envió correctamente
+// Cambiamos el tipo de retorno a Int? (o String? si tu ID es un UUID)
+suspend fun registrarViaje(viaje: NuevoViaje): Int? {
+    return try {
+        // Al añadir .select(), Supabase devuelve la fila creada
+        val response = supabase.from("viaje")
+            .insert(viaje) {
+                select()
+            }
+            // Decodificamos esa fila usando tu modelo de viaje completo (el que sí tiene ID)
+            .decodeSingle<Viaje>()
+
+        response.id // Devolvemos el ID generado por la base de datos
     } catch (e: Exception) {
         e.printStackTrace()
-        // Aquí podrías manejar el error (ej. falta de internet)
+        null // Si hay un error (ej. sin internet), devolvemos null
+    }
+}
+suspend fun registrarDestino(destino: NuevoDestino): Int? {
+    return try {
+        // Al añadir .select(), Supabase devuelve la fila creada
+        val response = supabase.from("destino")
+            .insert(destino) {
+                select()
+            }
+            // Decodificamos esa fila usando tu modelo de viaje completo (el que sí tiene ID)
+            .decodeSingle<Destino>()
+
+        response.id // Devolvemos el ID generado por la base de datos
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null // Si hay un error (ej. sin internet), devolvemos null
+    }
+}
+suspend fun registrarEtapa(etapa: NuevaEtapa){
+    try {
+        // Al añadir .select(), Supabase devuelve la fila creada
+        supabase.from("etapa")
+            .insert(etapa)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null // Si hay un error (ej. sin internet), devolvemos null
     }
 }
 

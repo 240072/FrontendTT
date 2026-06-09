@@ -24,22 +24,23 @@ AppScreens.LoginScreen.route
     }
 
     NavHost(navController = navController, startDestination = startDestination) {
-        composable(route = AppScreens.LoginScreen.route) { 
-            LoginScreen(navController = navController, loginViewModel = loginViewModel) 
+        composable(route = AppScreens.LoginScreen.route) {
+            LoginScreen(navController = navController, loginViewModel = loginViewModel)
         }
-        composable(route = AppScreens.RegisterScreen.route) { 
-            RegisterScreen(navController = navController) 
+        composable(route = AppScreens.RegisterScreen.route) {
+            RegisterScreen(navController = navController)
         }
-        composable(route = AppScreens.MenuScreen.route) { 
-            MenuScreen(navController = navController) 
+        composable(route = AppScreens.MenuScreen.route) {
+            MenuScreen(navController = navController)
         }
-        composable(route = AppScreens.ListaViajesScreen.route) { 
-            ListaViajesScreen(navController = navController) 
+        composable(route = AppScreens.ListaViajesScreen.route) {
+            ListaViajesScreen(navController = navController)
         }
-        composable(route = AppScreens.NuevoViajeScreen.route) { 
-            NuevoViajeScreen(navController = navController) 
+        composable(route = AppScreens.NuevoViajeScreen.route) {
+            NuevoViajeScreen(navController = navController)
         }
-        composable(route = AppScreens.ViajeScreen.route,
+        composable(
+            route = AppScreens.ViajeScreen.route,
             arguments = listOf(
                 navArgument("viajeId") { type = NavType.IntType }
             )
@@ -50,8 +51,15 @@ AppScreens.LoginScreen.route
             // Se lo pasamos a tu pantalla
             ViajeScreen(navController = navController, viajeId = viajeId)
         }
-        composable(route = AppScreens.EditarViajeScreen.route) { 
-            EditarViajeScreen(navController = navController) 
+        composable(
+            route = AppScreens.EditarViajeScreen.route,
+            arguments = listOf(
+                navArgument("viajeId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            // Extraemos el id de forma segura. Si por alguna razón es nulo, le ponemos 0 por defecto.
+            val viajeId = backStackEntry.arguments?.getInt("viajeId") ?: 0
+            EditarViajeScreen(navController = navController, viajeId = viajeId)
         }
     }
 }

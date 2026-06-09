@@ -147,8 +147,8 @@ fun ListaViajesScreen(navController: NavController) {
                         //val nombreViaje = viajeAEliminar?.nombre
                         //listaViajes = listaViajes.filter { it.id != viajeAEliminar?.id }
                         listaViajesViewModel.deleteTrip(viajeAEliminar?.id ?: 0)
-                        viajeAEliminar = null
                         scope.launch { snackbarHostState.showSnackbar("Has abandonado el viaje $viajeAEliminar?.nombre") }
+                        viajeAEliminar = null
                     }) { Text("Confirmar", color = Color.Red) }
                 },
                 dismissButton = {

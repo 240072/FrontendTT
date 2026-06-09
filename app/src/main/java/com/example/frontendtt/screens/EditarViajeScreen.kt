@@ -34,9 +34,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontendtt.components.DestinoItem
 import com.example.frontendtt.ui.theme.*
+import com.example.frontendtt.viewmodels.EditarViajeViewModel
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
@@ -47,6 +49,9 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import java.util.Locale
+import com.example.frontendtt.data.Dificultad.opcionesDificultad
+import com.example.frontendtt.data.NuevaEtapa
+import com.example.frontendtt.data.NuevoDestino
 
 data class DestinoViaje(
     val id: Int,
@@ -59,12 +64,15 @@ data class DestinoViaje(
 )
 
 @Composable
-fun EditarViajeScreen(navController: NavController) {
+fun EditarViajeScreen(navController: NavController, viajeId: Int) {
+    val editarViajeViewModel : EditarViajeViewModel = viewModel()
+    val editarViajeState by editarViajeViewModel.editarViajeState.collectAsState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    val cantidadDias = 4 
-    val diasDisponibles = List(cantidadDias) { "Día ${it + 1}" }
+    //var cantidadDias = remember{ editarViajeViewModel.diasState}
+    //val cantidadDias = 4
+    //val diasDisponibles = List(cantidadDias) { "Día ${it + 1}" }
+    val diasDisponibles = editarViajeViewModel.diasDisponiblesState
     var diaSeleccionadoIndex by remember { mutableIntStateOf(0) }
 
     var listaDestinos by remember { mutableStateOf(mutableListOf<DestinoViaje>()) }
@@ -74,7 +82,10 @@ fun EditarViajeScreen(navController: NavController) {
     var destinoAVer by remember { mutableStateOf<DestinoViaje?>(null) }
 
     val destinosFiltrados = listaDestinos.filter { it.diaAsociado == diaSeleccionadoIndex }
-
+    LaunchedEffect(viajeId) {
+        editarViajeViewModel.getTripInfo(viajeId)
+    }
+    val viaje = editarViajeViewModel.viajeState
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -163,7 +174,8 @@ fun EditarViajeScreen(navController: NavController) {
                         scope.launch { snackbarHostState.showSnackbar("Cambios guardados") }
                     }
                     mostrarFormulario = false
-                }
+                },
+                viajeId = viajeId
             )
         }
 
@@ -216,7 +228,9 @@ fun EditarViajeScreen(navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Unit, onSave: (DestinoViaje) -> Unit) {
+fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Unit, onSave: (DestinoViaje) -> Unit, viajeId: Int) {
+    val editarViajeViewModel : EditarViajeViewModel = viewModel()
+    val editarViajeState by editarViajeViewModel.editarViajeState.collectAsState()
     var nombre by remember { mutableStateOf(destinoExistente?.nombre ?: "") }
     val horasIniciales = destinoExistente?.hora?.split(" - ")
     var horaInicio by remember { mutableStateOf(horasIniciales?.getOrNull(0) ?: "08:00") }
@@ -224,8 +238,8 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
     var ubicacion by remember { mutableStateOf(destinoExistente?.ubicacion ?: "") }
     var descripcion by remember { mutableStateOf(destinoExistente?.descripcion ?: "") }
     val dificultades = listOf("Baja", "Media", "Alta")
-    var dificultadSeleccionada by remember { mutableStateOf(destinoExistente?.dificultad ?: "Media") }
-
+    //var dificultadSeleccionada by remember { mutableStateOf(destinoExistente?.dificultad ?: "Media") }
+    var dificultadSeleccionada = editarViajeState.dificultad
     var showInicioPicker by remember { mutableStateOf(false) }
     var showFinPicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -239,7 +253,7 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                     Text(text = if (destinoExistente == null) "Nuevo Destino" else "Editar Destino", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TravelPrimaryBlue)
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Cerrar") }
                 }
-                OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = editarViajeState.nombre, onValueChange = { editarViajeViewModel.onNameChange(it) }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedCard(
@@ -261,17 +275,20 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                 }
 
                 OutlinedTextField(value = ubicacion, onValueChange = { }, readOnly = true, label = { Text("Ubicación") }, modifier = Modifier.fillMaxWidth().clickable { searchLocationText = ""; showLocationDialog = true }, enabled = false, trailingIcon = { Icon(Icons.Default.LocationOn, null, tint = TravelPrimaryBlue) })
-                OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+                editarViajeState.descripcion?.let { OutlinedTextField(value = it, onValueChange = { editarViajeViewModel.onDescriptionChange(it) }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), minLines = 3) }
 
                 Text("Dificultad", fontWeight = FontWeight.Bold)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    dificultades.forEachIndexed { index, diff ->
-                        SegmentedButton(selected = dificultadSeleccionada == diff, onClick = { dificultadSeleccionada = diff }, shape = SegmentedButtonDefaults.itemShape(index = index, count = dificultades.size)) { Text(diff, fontSize = 10.sp) }
+                    opcionesDificultad.forEach { (index, diff) ->
+                        SegmentedButton(selected = (diff == dificultadSeleccionada), onClick = { editarViajeViewModel.onDificultyChange(if (dificultadSeleccionada == diff) 1 else diff) }, shape = SegmentedButtonDefaults.itemShape(index = diff, count = opcionesDificultad.size)) { Text(index, fontSize = 10.sp) }
                     }
                 }
 
                 Button(
-                    onClick = { if (nombre.isNotBlank()) onSave(DestinoViaje(destinoExistente?.id ?: 0, nombre, "$horaInicio - $horaFin", ubicacion, descripcion, dificultadSeleccionada, 0)) },
+                    //onClick = { if (nombre.isNotBlank()) onSave(DestinoViaje(destinoExistente?.id ?: 0, nombre, "$horaInicio - $horaFin", ubicacion, descripcion, dificultadSeleccionada, 0)) },
+                    onClick = {val idDestination = editarViajeViewModel.insertDestination(
+                        NuevoDestino(editarViajeState.nombre,editarViajeState.descripcion, 0.0,0.0,editarViajeState.dificultad))
+                              editarViajeViewModel.insertStage(NuevaEtapa(viajeId, idDestination ?:0, "08:00",9))},
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)

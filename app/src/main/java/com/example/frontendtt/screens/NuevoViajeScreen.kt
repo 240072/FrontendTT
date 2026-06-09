@@ -31,6 +31,7 @@ import com.example.traveltogethersupabase.data.MascotaTrip.opcionesMascotaTrip
 import com.example.traveltogethersupabase.data.NuevoViaje
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import com.example.traveltogethersupabase.network.registrarViaje
+import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 import java.sql.Date
@@ -194,9 +195,10 @@ fun NuevoViajeScreen(navController: NavController) {
                         tripState.tabaco,
                         tripState.mascota
                     )
-                    registrarViaje(insertarViaje)
-                    Log.d("Auth",insertarViaje.toString())
-                    navController.navigate("editar_viaje_screen")
+                    val id =registrarViaje(insertarViaje)
+                    Log.d("Registro", id.toString())
+
+                    navController.navigate(AppScreens.EditarViajeScreen.route.replace("{viajeId}", id.toString()))
 
                 } catch (e: Exception) {
                     println("Error en el registro: ${e.message}")

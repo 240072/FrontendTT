@@ -3,6 +3,7 @@ package com.example.traveltogethersupabase.network
 import com.example.frontendtt.data.Destino
 import com.example.frontendtt.data.DetalleViaje
 import com.example.frontendtt.data.Etapa
+import com.example.frontendtt.data.EtapaConDetalles
 import com.example.frontendtt.data.EtapaDetalle
 import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.data.NuevaEtapa
@@ -17,7 +18,6 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlin.uuid.Uuid
 
 suspend fun enviarRegistro(usuario: RegistroUsuario) {
     try {
@@ -71,7 +71,49 @@ suspend fun registrarEtapa(etapa: NuevaEtapa){
         null // Si hay un error (ej. sin internet), devolvemos null
     }
 }
+suspend fun buscarEtapasConDestinoYViaje(
+    fechainicio: String?,
+    fechafin: String?,
+): List<EtapaConDetalles> { // Luego definimos esta clase abajo
 
+    // 1. Especificamos qué columnas queremos de la etapa y de sus tablas relacionadas.
+    // Usamos la sintaxis de Supabase: tabla_relacionada(columna1, columna2)
+    val columnasASeleccionar = """
+        id,
+        horainicio,
+        duracion,
+        destino (
+            id, nombre, coordx, coordy, dificultad
+        ),
+        viaje!inner (
+            id, nombre, fechainicio, fechafin
+        )
+    """.trimIndent()
+
+    // 2. Lanzamos la consulta sobre la tabla 'etapa' pasándole las columnas
+    val respuesta = supabase.from("etapa").select(Columns.raw(columnasASeleccionar)) {
+
+        // 3. ¡Aquí dentro ocurre la magia de los filtros!
+        filter {
+            // Filtro por ubicación si el usuario la escribió
+
+
+            // Filtro por fecha si el usuario la seleccionó
+            if (!fechainicio.isNullOrBlank()) {
+                // Buscamos viajes que empiecen a partir de esa fecha
+                gte("viaje.fechainicio", fechainicio)
+            }
+            if (!fechafin.isNullOrBlank()) {
+                // Buscamos viajes que empiecen a partir de esa fecha
+                lte("viaje.fechainicio", fechafin)
+            }
+
+        }
+    }
+
+    // 4. Parseamos el resultado a objetos de Kotlin
+    return respuesta.decodeList<EtapaConDetalles>()
+}
 suspend fun getDetalleViajesDelUsuario(): List<ListaViajes> {
     val userId = supabase.auth.currentUserOrNull()?.id
         ?: return emptyList()

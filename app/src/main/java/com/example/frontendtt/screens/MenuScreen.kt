@@ -3,6 +3,7 @@ package com.example.frontendtt.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -33,13 +34,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontendtt.R
 import com.example.frontendtt.components.showDatePicker
 import com.example.frontendtt.ui.theme.*
+import com.example.frontendtt.viewmodels.LoginViewModel
+import com.example.frontendtt.viewmodels.MenuViewModel
 import com.google.android.gms.location.LocationServices
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
@@ -57,34 +62,34 @@ import java.util.Locale
 /* 🧳 MODELO VIAJE DEMO */
 /* ---------------------------------------------------- */
 
-data class Trip(val title: String, val location: String, val dateStart: Long, val dateEnd: Long)
+// data class Trip(val title: String, val location: String, val dateStart: Long, val dateEnd: Long)
 
-fun getTrips(start: String?, end: String?, locationFilter: String): List<Trip> {
-    val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    val today = System.currentTimeMillis()
-    val dayInMs = 24 * 60 * 60 * 1000L
+// fun getTrips(start: String?, end: String?, locationFilter: String): List<Trip> {
+//     val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+//     val today = System.currentTimeMillis()
+//     val dayInMs = 24 * 60 * 60 * 1000L
 
-    val allTrips = listOf(
-        Trip("Escapada Montaña", "Pirineos", today - 10 * dayInMs, today - 5 * dayInMs),
-        Trip("Ruta Costera", "Costa Mediterránea", today + 2 * dayInMs, today + 7 * dayInMs),
-        Trip("Aventura Natural", "Asturias", today - 1 * dayInMs, today + 4 * dayInMs),
-        Trip("Nieve y Sol", "Sierra Nevada", today + 20 * dayInMs, today + 25 * dayInMs),
-        Trip("Ruta Gastronómica", "Galicia", today + 5 * dayInMs, today + 10 * dayInMs)
-    )
+//     val allTrips = listOf(
+//         Trip("Escapada Montaña", "Pirineos", today - 10 * dayInMs, today - 5 * dayInMs),
+//         Trip("Ruta Costera", "Costa Mediterránea", today + 2 * dayInMs, today + 7 * dayInMs),
+//         Trip("Aventura Natural", "Asturias", today - 1 * dayInMs, today + 4 * dayInMs),
+//         Trip("Nieve y Sol", "Sierra Nevada", today + 20 * dayInMs, today + 25 * dayInMs),
+//         Trip("Ruta Gastronómica", "Galicia", today + 5 * dayInMs, today + 10 * dayInMs)
+//     )
 
-    val filterStart = start?.let { try { sdf.parse(it)?.time } catch (e: Exception) { null } }
-    val filterEnd = end?.let { try { sdf.parse(it)?.time } catch (e: Exception) { null } }
+//     val filterStart = start?.let { try { sdf.parse(it)?.time } catch (e: Exception) { null } }
+//     val filterEnd = end?.let { try { sdf.parse(it)?.time } catch (e: Exception) { null } }
 
-    return allTrips.filter { trip ->
-        val matchesLocation = locationFilter.isBlank() || trip.location.contains(locationFilter, ignoreCase = true)
-        val matchesDate = if (filterStart != null && filterEnd != null) {
-            trip.dateStart <= filterEnd && trip.dateEnd >= filterStart
-        } else {
-            trip.dateEnd >= today
-        }
-        matchesLocation && matchesDate
-    }
-}
+//     return allTrips.filter { trip ->
+//         val matchesLocation = locationFilter.isBlank() || trip.location.contains(locationFilter, ignoreCase = true)
+//         val matchesDate = if (filterStart != null && filterEnd != null) {
+//             trip.dateStart <= filterEnd && trip.dateEnd >= filterStart
+//         } else {
+//             trip.dateEnd >= today
+//         }
+//         matchesLocation && matchesDate
+//     }
+// }
 
 /* ---------------------------------------------------- */
 /* 🌍 SCREEN PRINCIPAL */
@@ -93,6 +98,8 @@ fun getTrips(start: String?, end: String?, locationFilter: String): List<Trip> {
 @Composable
 fun MenuScreen(navController: NavController) {
 
+    val menuViewModel: MenuViewModel = viewModel()
+    val menuState by menuViewModel.menuState.collectAsState()
     val context = LocalContext.current
 
     var startDate by remember { mutableStateOf<String?>(null) }
@@ -101,10 +108,19 @@ fun MenuScreen(navController: NavController) {
     
     var showLocationDialog by remember { mutableStateOf(false) }
     var searchLocationText by remember { mutableStateOf("") }
-    var rangeKm by remember { mutableFloatStateOf(10f) }
+    var rangeKm by remember { mutableDoubleStateOf(1.0) }
+    var allTrips = menuViewModel.listaFiltradaState
 
-    val trips = remember(startDate, endDate, locationFilter) {
-        getTrips(startDate, endDate, locationFilter)
+    //val trips = remember(startDate, endDate, locationFilter) {getTrips(startDate, endDate, locationFilter)}
+    LaunchedEffect(menuState.fechainicio, menuState.fechafin,  menuState.coordx, menuState.coordy, menuState.distancia) {
+        delay(500L)
+        // Validación previa para no buscar con campos vacíos
+        if (menuState.coordx != 0.0) {
+            allTrips = menuViewModel.buscarDestinos(menuState.fechainicio, menuState.fechafin, menuState.coordy,menuState.coordx, menuState.distancia)
+
+
+
+        }
     }
 
     Scaffold(
@@ -184,12 +200,11 @@ fun MenuScreen(navController: NavController) {
                         .fillMaxWidth()
                         .clickable {
                             showDatePicker(context) { 
-                                if (startDate == null || endDate != null) {
-                                    startDate = it
-                                    endDate = null
+                                if (menuState.fechainicio == "" || menuState.fechafin != "") {
+                                    menuViewModel.onInitialDateChange(it)
+                                    menuViewModel.onFinalDateChange("")
                                 } else {
-                                    endDate = it
-                                }
+                                    menuViewModel.onFinalDateChange(it)                               }
                             }
                         }
                         .padding(20.dp),
@@ -215,8 +230,8 @@ fun MenuScreen(navController: NavController) {
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                         Text(
-                            if (startDate == null) "Inicio" else startDate!!,
-                            color = if (startDate == null) Color.Gray else TravelEarth
+                            if (menuState.fechainicio == "") "Inicio" else menuState.fechainicio!!,
+                            color = if (menuState.fechainicio == "") Color.Gray else TravelEarth
                         )
                             Icon(
                                 painter = painterResource(id = android.R.drawable.ic_media_play),
@@ -225,8 +240,8 @@ fun MenuScreen(navController: NavController) {
                                 tint = Color.Gray
                             )
                         Text(
-                            if (endDate == null) "Fin" else endDate!!,
-                            color = if (endDate == null) Color.Gray else TravelEarth
+                            if (menuState.fechafin == "") "Fin" else menuState.fechafin!!,
+                            color = if (menuState.fechafin == "") Color.Gray else TravelEarth
                         )
                         }
                     }
@@ -267,14 +282,14 @@ fun MenuScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${rangeKm.toInt()} KM",
+                        text = "${menuState.distancia.toInt()} KM",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = TravelPrimaryBlue
                     )
                     Slider(
-                        value = rangeKm,
-                        onValueChange = { rangeKm = it },
+                        value = menuState.distancia.toFloat(),
+                        onValueChange = { menuViewModel.onDistanceChange(it.toDouble()) },
                         valueRange = 1f..100f,
                         colors = SliderDefaults.colors(
                             thumbColor = TravelPrimaryBlue,
@@ -295,7 +310,7 @@ fun MenuScreen(navController: NavController) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(trips) { trip ->
+                items(allTrips) { trip ->
                     Card(
                         onClick = { 
                             navController.navigate(AppScreens.ViajeScreen.route)
@@ -306,8 +321,8 @@ fun MenuScreen(navController: NavController) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(Modifier.padding(16.dp)) {
-                            Text(trip.title, fontWeight = FontWeight.Bold)
-                            Text(trip.location, color = TravelEarth)
+                            Text(trip.viaje.nombre, fontWeight = FontWeight.Bold)
+                            Text(trip.destino.nombre, color = TravelEarth)
                         }
                     }
                 }
@@ -352,6 +367,10 @@ fun MenuScreen(navController: NavController) {
                 
                 if (!resultados.isNullOrEmpty()) {
                     val direccion = resultados[0]
+                    menuViewModel.onXCoordinateChange(direccion.longitude)
+                    menuViewModel.onYCoordinateChange(direccion.latitude)
+                    Log.d("Point", menuState.coordx.toString())
+                    Log.d("Point", menuState.coordy.toString())
                     val nuevoPunto = GeoPoint(direccion.latitude, direccion.longitude)
                     
                     // Volvemos al hilo principal para actualizar la UI de Compose

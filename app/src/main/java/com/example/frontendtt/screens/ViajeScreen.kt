@@ -205,7 +205,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                             hora = destino.horainicio,
                             ubicacion = destino.destino.coordx.toString(),
                             onClick = { destinoSeleccionado =
-                                (destino.destino ?: null) as Destino?
+                                ((destino.destino ?: null) as Destino?)
                             }
                         )
                     }

@@ -23,6 +23,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontendtt.components.DestinoItem
 import com.example.frontendtt.components.SectionHeader
+import com.example.frontendtt.data.Destino
+import com.example.frontendtt.data.Dificultad.opcionesDificultad
+import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.ViajeViewModel
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
@@ -41,13 +44,13 @@ data class TripInfo(
 
 data class Participante(val id: Int, val alias: String)
 
-data class Destino(
-    val nombre: String,
-    val descripcion: String,
-    val hora: String,
-    val ubicacion: String,
-    val dificultad: String
-)
+// data class Destino(
+//     val nombre: String,
+//     val descripcion: String,
+//     val hora: String,
+//     val ubicacion: String,
+//     val dificultad: String
+// )
 
 @Composable
 fun ViajeScreen(viajeId: Int, navController: NavController) {
@@ -71,11 +74,11 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
 
     //val participantes = listOf(Participante(1, "Álex Aventurero"),Participante(2, "Marta Maps"), Participante(3, "Dani Cimas"), Participante(4, "Sofía Trekking"))
 
-    val destinos = listOf(
-        Destino("Valle de Ordesa", "Parque Nacional con cascadas impresionantes.", "09:00 - 18:00", "Torla, Huesca", "Media"),
-        Destino("Monte Perdido", "Ascensión mítica a más de 3000m.", "06:00 - 20:00", "Fanlo, Huesca", "Alta"),
-        Destino("Ainsa", "Pueblo medieval perfecto para descansar.", "11:00 - 14:00", "Ainsa, Huesca", "Baja")
-    )
+    // val destinos = listOf(
+    //     Destino("Valle de Ordesa", "Parque Nacional con cascadas impresionantes.", "09:00 - 18:00", "Torla, Huesca", "Media"),
+    //     Destino("Monte Perdido", "Ascensión mítica a más de 3000m.", "06:00 - 20:00", "Fanlo, Huesca", "Alta"),
+    //     Destino("Ainsa", "Pueblo medieval perfecto para descansar.", "11:00 - 14:00", "Ainsa, Huesca", "Baja")
+    // )
 
     var destinoSeleccionado by remember { mutableStateOf<Destino?>(null) }
     val scrollState = rememberScrollState()
@@ -140,7 +143,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                 /* 🔘 BOTÓN UNIRME */
                 if (!viajeViewModel.yaParticipa) {
                     Button(
-                        onClick = { /* Acción */ },
+                        onClick = { viajeViewModel.joinTrip(UnirParticipacion(miUserId!!,viajeId)) },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)
@@ -205,7 +208,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                             hora = destino.horainicio,
                             ubicacion = destino.destino.coordx.toString(),
                             onClick = { destinoSeleccionado =
-                                ((destino.destino ?: null) as Destino?)
+                                destino.destino
                             }
                         )
                     }
@@ -231,16 +234,17 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                     destino.descripcion?.let { Text(it) }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = Color.Gray.copy(alpha = 0.2f))
                     Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text(destino.nombre) }
-                    Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); Text(destino.ubicacion) }
+                    Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); destino.descripcion?.let { Text(it) } }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Dificultad: ", fontWeight = FontWeight.Bold)
                         val (emoji, color) = when (destino.dificultad) {
-                            "0" -> "🔴" to Color.Red
-                            "1" -> "🟠" to Color(0xFFF57C00)
-                            "2" -> "🟢" to TravelPrimaryBlue
+                            0 -> "🔴" to Color.Red
+                            1 -> "🟠" to Color(0xFFF57C00)
+                            2 -> "🟢" to TravelPrimaryBlue
                             else -> "⚪" to Color.Gray
                         }
-                        Text("$emoji ${destino.dificultad}", color = color, fontWeight = FontWeight.Bold)
+
+                        Text("$emoji ${opcionesDificultad[destino.dificultad]}", color = color, fontWeight = FontWeight.Bold)
                     }
                 }
             },

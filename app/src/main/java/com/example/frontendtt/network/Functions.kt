@@ -9,6 +9,7 @@ import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.data.NuevaEtapa
 import com.example.frontendtt.data.NuevoDestino
 import com.example.frontendtt.data.ParticipacionConUsuario
+import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.data.UsuarioNombre
 import com.example.frontendtt.data.Viaje
 import com.example.traveltogethersupabase.data.NuevoViaje
@@ -27,6 +28,9 @@ suspend fun enviarRegistro(usuario: RegistroUsuario) {
         e.printStackTrace()
         // Aquí podrías manejar el error (ej. falta de internet)
     }
+}
+suspend fun unirseViaje(usuario: UnirParticipacion){
+    supabase.from("participacion").insert(usuario)
 }
 // Cambiamos el tipo de retorno a Int? (o String? si tu ID es un UUID)
 suspend fun registrarViaje(viaje: NuevoViaje): Int? {

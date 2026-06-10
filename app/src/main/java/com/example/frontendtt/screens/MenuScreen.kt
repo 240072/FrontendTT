@@ -313,7 +313,7 @@ fun MenuScreen(navController: NavController) {
                 items(allTrips) { trip ->
                     Card(
                         onClick = { 
-                            navController.navigate(AppScreens.ViajeScreen.route)
+                            navController.navigate(AppScreens.ViajeScreen.route.replace("{viajeId}", trip.viaje.id.toString()))
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White

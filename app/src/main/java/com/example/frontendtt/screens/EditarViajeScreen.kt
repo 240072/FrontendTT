@@ -286,7 +286,7 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                 Text("Dificultad", fontWeight = FontWeight.Bold)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     opcionesDificultad.forEach { (index, diff) ->
-                        SegmentedButton(selected = (diff == dificultadSeleccionada), onClick = { editarViajeViewModel.onDificultyChange(if (dificultadSeleccionada == diff) 1 else diff) }, shape = SegmentedButtonDefaults.itemShape(index = diff, count = opcionesDificultad.size)) { Text(index, fontSize = 10.sp) }
+                        SegmentedButton(selected = (index == dificultadSeleccionada), onClick = { editarViajeViewModel.onDificultyChange(if (dificultadSeleccionada == index) 1 else index) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = opcionesDificultad.size)) { Text(diff, fontSize = 10.sp) }
                     }
                 }
 

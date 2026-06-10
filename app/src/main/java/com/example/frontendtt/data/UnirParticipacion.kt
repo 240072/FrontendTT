@@ -1,4 +1,10 @@
 package com.example.frontendtt.data
 
-class UnirParticipacion {
-}
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class UnirParticipacion (
+    val idusuario: String,
+    val idviaje: Int
+
+)

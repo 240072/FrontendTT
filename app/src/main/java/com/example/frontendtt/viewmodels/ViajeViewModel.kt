@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.frontendtt.data.DetalleViaje
 import com.example.frontendtt.data.EtapaDetalle
 import com.example.frontendtt.data.ListaViajes
+import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.data.UsuarioNombre
 import com.example.traveltogethersupabase.network.getDetallesViaje
 import com.example.traveltogethersupabase.network.obtenerEtapasDetalle
 import com.example.traveltogethersupabase.network.obtenerParticipantes
+import com.example.traveltogethersupabase.network.unirseViaje
 import kotlinx.coroutines.launch
 
 class ViajeViewModel: ViewModel () {
@@ -37,6 +39,11 @@ class ViajeViewModel: ViewModel () {
     fun getTrip(id: Int) {
         viewModelScope.launch {
             viajeState = getDetallesViaje(id)
+        }
+    }
+    fun joinTrip(usuario: UnirParticipacion){
+        viewModelScope.launch {
+            unirseViaje(usuario)
         }
     }
 }

@@ -8,7 +8,7 @@ data class EditarViajeState (
     val dificultad: Int = 0,
     val idviaje: Int = 0,
     val iddestino: Int = 0,
-    val horainicio: String = "",
-    val horafin: String = "",
+    val horainicio: String = "08:00",
+    val horafin: String = "09:00",
     val duracion: Int = 0
 )

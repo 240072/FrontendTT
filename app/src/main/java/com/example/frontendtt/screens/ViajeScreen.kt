@@ -25,6 +25,7 @@ import com.example.frontendtt.components.DestinoItem
 import com.example.frontendtt.components.SectionHeader
 import com.example.frontendtt.data.Destino
 import com.example.frontendtt.data.Dificultad.opcionesDificultad
+import com.example.frontendtt.data.EtapaDetalle
 import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.ViajeViewModel
@@ -80,7 +81,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
     //     Destino("Ainsa", "Pueblo medieval perfecto para descansar.", "11:00 - 14:00", "Ainsa, Huesca", "Baja")
     // )
 
-    var destinoSeleccionado by remember { mutableStateOf<Destino?>(null) }
+    var destinoSeleccionado by remember { mutableStateOf<EtapaDetalle?>(null) }
     val scrollState = rememberScrollState()
     //val currentUserAlias = "AventureroInvitado"
 
@@ -208,7 +209,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                             hora = destino.horainicio,
                             ubicacion = destino.destino.coordx.toString(),
                             onClick = { destinoSeleccionado =
-                                destino.destino
+                                destino
                             }
                         )
                     }
@@ -228,23 +229,23 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                 }
             },
             icon = { Icon(Icons.Default.Info, contentDescription = null, tint = TravelDeepNavy) },
-            title = { Text(destino.nombre, fontWeight = FontWeight.Bold) },
+            title = { Text(destino.destino.nombre, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    destino.descripcion?.let { Text(it) }
+                    destino.destino.descripcion?.let { Text(it) }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = Color.Gray.copy(alpha = 0.2f))
-                    Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text(destino.nombre) }
-                    Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); destino.descripcion?.let { Text(it) } }
+                    Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text(destino.horainicio)}
+                    Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); Text(destino.destino.coordx.toString()) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Dificultad: ", fontWeight = FontWeight.Bold)
-                        val (emoji, color) = when (destino.dificultad) {
-                            0 -> "🔴" to Color.Red
+                        val (emoji, color) = when (destino.destino.dificultad) {
+                            2 -> "🔴" to Color.Red
                             1 -> "🟠" to Color(0xFFF57C00)
-                            2 -> "🟢" to TravelPrimaryBlue
+                            0 -> "🟢" to TravelPrimaryBlue
                             else -> "⚪" to Color.Gray
                         }
 
-                        Text("$emoji ${opcionesDificultad[destino.dificultad]}", color = color, fontWeight = FontWeight.Bold)
+                        Text("$emoji ${opcionesDificultad[destino.destino.dificultad]}", color = color, fontWeight = FontWeight.Bold)
                     }
                 }
             },

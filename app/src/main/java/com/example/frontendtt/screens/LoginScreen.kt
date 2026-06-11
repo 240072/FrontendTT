@@ -48,7 +48,10 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
     var showLogin by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    var intentoEnviar by remember { mutableStateOf(false) }
+    val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
+    val errorPassword = intentoEnviar && (loginState.password.isBlank() || loginState.password.length<6)
+    val errorEmail = intentoEnviar && (loginState.correo.isBlank() || !loginState.correo.matches(emailRegex))
     Scaffold(
         containerColor = TravelSkyBlue
     ) { padding ->
@@ -120,6 +123,14 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                         value = loginState.correo,
                         onValueChange = { loginViewModel.onCorreoChange(it) },
                         label = { Text("Usuario") },
+                        isError = errorEmail,
+                        supportingText = {
+                            if (errorEmail) {
+                                    val mensaje = if (loginState.correo.isBlank()) "El correo es obligatorio" else "El formato no es válido"
+                                Text(mensaje, color = MaterialTheme.colorScheme.error)
+
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -136,6 +147,13 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                         value = loginState.password,
                         onValueChange = { loginViewModel.onPasswordChange(it) },
                         label = { Text("Contraseña") },
+                        isError = errorPassword,
+                        supportingText = {
+                            if (errorPassword) {
+                                val mensaje = if (loginState.password.isBlank()) "La contraseña es obligatoria" else "La contraseña tiene que tener mínimo 6 caracteres"
+                                Text(mensaje, color = MaterialTheme.colorScheme.error)
+                            }
+                        },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -152,27 +170,35 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                     PrimaryTravelButton(
                         text = "Aceptar",
                         onClick = {
+                            intentoEnviar = true
+                            val todoEsValido = loginState.password.isNotBlank() && loginState.password.length>=6 && loginState.correo.isNotBlank() && loginState.correo.matches(emailRegex)
 
-                scope.launch {
-                    try {
-                    supabase.auth.signInWith(Email) {
-                        email = loginState.correo
-                        password = loginState.password
-                    }
-                        Log.d(
-                            "AUTH",
-                            "session=${supabase.auth.currentSessionOrNull()}"
-                        )
+                            if (todoEsValido) {
+                                scope.launch {
+                                    try {
+                                        supabase.auth.signInWith(Email) {
+                                            email = loginState.correo
+                                            password = loginState.password
+                                        }
+                                        Log.d(
+                                            "AUTH",
+                                            "session=${supabase.auth.currentSessionOrNull()}"
+                                        )
 
-                        Log.d(
-                            "AUTH",
-                            "user=${supabase.auth.currentUserOrNull()}"
-                        )
-                        navController.navigate(AppScreens.MenuScreen.route)
-                    } catch (e: Exception) {
-                        Toast.makeText(context,"Error al loguearse", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                                        Log.d(
+                                            "AUTH",
+                                            "user=${supabase.auth.currentUserOrNull()}"
+                                        )
+                                        navController.navigate(AppScreens.MenuScreen.route)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            context,
+                                            "Error al loguearse",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
             }
                     )
 

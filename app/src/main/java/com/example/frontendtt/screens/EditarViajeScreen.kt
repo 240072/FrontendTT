@@ -58,6 +58,8 @@ import com.example.frontendtt.data.NuevaEtapa
 import com.example.frontendtt.data.NuevoDestino
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalTime
+import java.time.Duration
 
 data class DestinoViaje(
     val id: Int,
@@ -268,7 +270,7 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.outlinedCardColors(containerColor = Color.White)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) { Text("Inicio", style = MaterialTheme.typography.labelSmall, color = Color.Gray); Text(horaInicio, fontWeight = FontWeight.Bold) }
+                        Column(modifier = Modifier.padding(12.dp)) { Text("Inicio", style = MaterialTheme.typography.labelSmall, color = Color.Gray); Text(editarViajeState.horainicio, fontWeight = FontWeight.Bold) }
                     }
                     OutlinedCard(
                         onClick = { showFinPicker = true },
@@ -276,7 +278,7 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.outlinedCardColors(containerColor = Color.White)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) { Text("Fin", style = MaterialTheme.typography.labelSmall, color = Color.Gray); Text(horaFin, fontWeight = FontWeight.Bold) }
+                        Column(modifier = Modifier.padding(12.dp)) { Text("Fin", style = MaterialTheme.typography.labelSmall, color = Color.Gray); Text(editarViajeState.horafin, fontWeight = FontWeight.Bold) }
                     }
                 }
 
@@ -292,9 +294,11 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
 
                 Button(
                     //onClick = { if (nombre.isNotBlank()) onSave(DestinoViaje(destinoExistente?.id ?: 0, nombre, "$horaInicio - $horaFin", ubicacion, descripcion, dificultadSeleccionada, 0)) },
-                    onClick = {val idDestination = editarViajeViewModel.insertDestination(
+                    onClick = {
+                        val duration = Duration.between(LocalTime.parse(editarViajeState.horainicio),LocalTime.parse(editarViajeState.horafin)).toHours()
+                        val idDestination = editarViajeViewModel.insertDestination(
                         NuevoDestino(editarViajeState.nombre,editarViajeState.descripcion, editarViajeState.coordx,editarViajeState.coordy,editarViajeState.dificultad))
-                              editarViajeViewModel.insertStage(NuevaEtapa(viajeId, idDestination ?:0, "08:00",9))},
+                              editarViajeViewModel.insertStage(NuevaEtapa(viajeId, idDestination ?:0, editarViajeState.horainicio,duration.toInt()))},
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)
@@ -303,8 +307,8 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
         }
     }
 
-    if (showInicioPicker) { TimePickerView(onDismiss = { showInicioPicker = false }, onConfirm = { h, m -> horaInicio = String.format(Locale.US, "%02d:%02d", h, m); showInicioPicker = false }) }
-    if (showFinPicker) { TimePickerView(onDismiss = { showFinPicker = false }, onConfirm = { h, m -> horaFin = String.format(Locale.US, "%02d:%02d", h, m); showFinPicker = false }) }
+    if (showInicioPicker) { TimePickerView(onDismiss = { showInicioPicker = false }, onConfirm = { h, m -> editarViajeViewModel.onInitialHourChange(String.format(Locale.US, "%02d:%02d", h, m)); showInicioPicker = false }) }
+    if (showFinPicker) { TimePickerView(onDismiss = { showFinPicker = false }, onConfirm = { h, m -> editarViajeViewModel.onFinalHourChange(String.format(Locale.US, "%02d:%02d", h, m)); showFinPicker = false }) }
 
     if (showLocationDialog) {
     val context = LocalContext.current

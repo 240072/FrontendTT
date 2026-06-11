@@ -48,6 +48,12 @@ fun RegisterScreen(navController: NavController) {
 
     
     val tabacoSeleccionado = loginState.tobaccoOption
+    var intentoEnviar by remember { mutableStateOf(false) }
+    val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
+    val errorNombre = intentoEnviar && loginState.name.isBlank()
+    val errorAlias = intentoEnviar && loginState.alias.isBlank()
+    val errorPassword = intentoEnviar && (loginState.password.isBlank() || loginState.password.length<6)
+    val errorEmail = intentoEnviar && (loginState.correo.isBlank() || !loginState.correo.matches(emailRegex))
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
@@ -94,6 +100,15 @@ fun RegisterScreen(navController: NavController) {
                             value = loginState.name,
                             onValueChange = { loginViewModel.onNameChange(it) },
                             label = { Text("Nombre") },
+                            isError = errorNombre,
+                            supportingText = {
+                                if (errorNombre){
+                                    Text(
+                                        text = "El nombre es obligatorio",
+                                        color = MaterialTheme.colorScheme.error // Usa el rojo del sistema
+                                    )
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -101,6 +116,15 @@ fun RegisterScreen(navController: NavController) {
                             value = loginState.alias,
                             onValueChange = { loginViewModel.onAliasChange(it) },
                             label = { Text("Alias") },
+                            isError = errorAlias,
+                            supportingText = {
+                                if (errorAlias){
+                                    Text(
+                                        text = "El alias es obligatorio",
+                                        color = MaterialTheme.colorScheme.error // Usa el rojo del sistema
+                                    )
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -108,6 +132,14 @@ fun RegisterScreen(navController: NavController) {
                             value = loginState.correo,
                             onValueChange = { loginViewModel.onCorreoChange(it) },
                             label = { Text("Correo") },
+                            isError = errorEmail,
+                            supportingText = {
+                                if (errorEmail) {
+                                    val mensaje = if (loginState.correo.isBlank()) "El correo es obligatorio" else "El formato no es válido"
+                                    Text(mensaje, color = MaterialTheme.colorScheme.error)
+
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
                         )
@@ -115,6 +147,13 @@ fun RegisterScreen(navController: NavController) {
                             value = loginState.password,
                             onValueChange = { loginViewModel.onPasswordChange(it) },
                             label = { Text("Contraseña") },
+                            isError = errorPassword,
+                            supportingText = {
+                                if (errorPassword) {
+                                    val mensaje = if (loginState.password.isBlank()) "La contraseña es obligatoria" else "La contraseña tiene que tener mínimo 6 caracteres"
+                                    Text(mensaje, color = MaterialTheme.colorScheme.error)
+                                }
+                            },
                             visualTransformation = PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp)
@@ -227,28 +266,33 @@ fun RegisterScreen(navController: NavController) {
 
 
                 Button(
-                    onClick = { scope.launch {
-                    try {
-                        // 1. Registrar en Auth (Esto crea el UUID en el esquema privado)
-                        val user = supabase.auth.signUpWith(Email) {
-                            email = loginState.correo
-                            password = loginState.password
+                    onClick = {
+                        intentoEnviar = true
+                        val todoEsValido = loginState.name.isNotBlank() && loginState.alias.isNotBlank() && loginState.password.isNotBlank() && loginState.password.length>=6 && loginState.correo.isNotBlank() && loginState.correo.matches(emailRegex)
 
-                            // PASO CRÍTICO: Enviar metadatos para que el Trigger de SQL los reciba
-                            data = buildJsonObject {
-                                put("alias", loginState.alias)
-                                put("nombre", loginState.name)
-                                put("tabaco", tabacoSeleccionado)
-                                put("mascota", mascotaSeleccionada)
-                            }
-                        }
+                        if (todoEsValido) {
+                        scope.launch {
+                            try {
+                                // 1. Registrar en Auth (Esto crea el UUID en el esquema privado)
+                                val user = supabase.auth.signUpWith(Email) {
+                                    email = loginState.correo
+                                    password = loginState.password
 
-                        // 2. ¿Necesitas llamar a enviarRegistro()?
-                        // Si configuraste el TRIGGER que te pasé antes en SQL,
-                        // ¡YA NO ES NECESARIO! El Trigger lo hace solo.
+                                    // PASO CRÍTICO: Enviar metadatos para que el Trigger de SQL los reciba
+                                    data = buildJsonObject {
+                                        put("alias", loginState.alias)
+                                        put("nombre", loginState.name)
+                                        put("tabaco", tabacoSeleccionado)
+                                        put("mascota", mascotaSeleccionada)
+                                    }
+                                }
 
-                        // Si NO usas trigger, tendrías que hacerlo así:
-                        /*
+                                // 2. ¿Necesitas llamar a enviarRegistro()?
+                                // Si configuraste el TRIGGER que te pasé antes en SQL,
+                                // ¡YA NO ES NECESARIO! El Trigger lo hace solo.
+
+                                // Si NO usas trigger, tendrías que hacerlo así:
+                                /*
                         val userId = user?.id ?: return@launch
                         val nuevoUsuario = RegistroUsuario(
                             id = userId, // Usamos el UUID real
@@ -258,16 +302,16 @@ fun RegisterScreen(navController: NavController) {
                         enviarRegistro(nuevoUsuario)
                         */
 
-                        Log.i("TAG","Registro exitoso para: ${user?.email}")
+                                Log.i("TAG", "Registro exitoso para: ${user?.email}")
 
-    } catch (e: io.github.jan.supabase.exceptions.RestException) {
-    // .toString() en las excepciones de Supabase suele formatear el JSON del error completo
-    Log.e("TAG", "RestException detectado: ${e.toString()}")
-    Log.e("TAG", "Mensaje del error: ${e.message}")
-} catch (e: Exception) {
-    Log.e("TAG", "Error inesperado no relacionado con Supabase", e)
-}
-                } },
+                            } catch (e: io.github.jan.supabase.exceptions.RestException) {
+                                // .toString() en las excepciones de Supabase suele formatear el JSON del error completo
+                                Log.e("TAG", "RestException detectado: ${e.toString()}")
+                                Log.e("TAG", "Mensaje del error: ${e.message}")
+                            } catch (e: Exception) {
+                                Log.e("TAG", "Error inesperado no relacionado con Supabase", e)
+                            }
+                        } } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -278,7 +322,8 @@ fun RegisterScreen(navController: NavController) {
                 }
                 
                 Spacer(modifier = Modifier.height(20.dp))
+                    }
             }
         }
     }
-}
+

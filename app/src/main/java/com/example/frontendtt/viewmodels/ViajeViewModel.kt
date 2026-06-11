@@ -44,6 +44,8 @@ class ViajeViewModel: ViewModel () {
     fun joinTrip(usuario: UnirParticipacion){
         viewModelScope.launch {
             unirseViaje(usuario)
+            getParticipants(usuario.idviaje,usuario.idusuario)
+
         }
     }
 }

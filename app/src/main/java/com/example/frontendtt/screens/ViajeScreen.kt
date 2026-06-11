@@ -71,6 +71,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
     val etapas = viajeViewModel.etapasState
     val viaje = viajeViewModel.viajeState
 
+
     //val viaje = TripInfo(nombre = "Expedición Pirineos 2024", descripcion = "Una aventura épica cruzando los valles más profundos y las cimas más altas. Preparados para la libertad.", fechaInicio = "15 Ago 2024", fechaFin = "22 Ago 2024")
 
     //val participantes = listOf(Participante(1, "Álex Aventurero"),Participante(2, "Marta Maps"), Participante(3, "Dani Cimas"), Participante(4, "Sofía Trekking"))

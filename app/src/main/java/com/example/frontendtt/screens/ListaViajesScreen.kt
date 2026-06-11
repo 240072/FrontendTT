@@ -25,7 +25,9 @@ import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.ListaViajesViewModel
 import com.example.frontendtt.viewmodels.LoginViewModel
+import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 
 /* ---------------------------------------------------- */
@@ -56,7 +58,7 @@ fun ListaViajesScreen(navController: NavController) {
             )
         )
     }
-
+    val userId = supabase.auth.currentUserOrNull()?.id
     var viajeAEliminar by remember { mutableStateOf<ListaViajes?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -146,7 +148,13 @@ fun ListaViajesScreen(navController: NavController) {
                     TextButton(onClick = {
                         //val nombreViaje = viajeAEliminar?.nombre
                         //listaViajes = listaViajes.filter { it.id != viajeAEliminar?.id }
-                        listaViajesViewModel.deleteTrip(viajeAEliminar?.id ?: 0)
+                        if (userId == viajeAEliminar?.idcreador) {
+                            listaViajesViewModel.deleteTrip(viajeAEliminar?.id ?: 0)
+                        } else {
+                            listaViajesViewModel.deleteParticipation(userId!!,
+                                viajeAEliminar?.id ?: 0
+                            )
+                        }
                         scope.launch { snackbarHostState.showSnackbar("Has abandonado el viaje $viajeAEliminar?.nombre") }
                         viajeAEliminar = null
                     }) { Text("Confirmar", color = Color.Red) }

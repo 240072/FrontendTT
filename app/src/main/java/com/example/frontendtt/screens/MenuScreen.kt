@@ -41,6 +41,7 @@ import com.example.frontendtt.components.showDatePicker
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.LoginViewModel
 import com.example.frontendtt.viewmodels.MenuViewModel
+import com.example.traveltogethersupabase.network.cerrarSesion
 import com.google.android.gms.location.LocationServices
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import kotlinx.coroutines.Dispatchers
@@ -188,6 +189,7 @@ fun MenuScreen(navController: NavController) {
                     )
                 }
             }
+            //Button(onClick = { menuViewModel.closeSession() }){Text("Cerrar sesión")}
 
             /* 📅 SELECTOR FECHAS */
             Card(

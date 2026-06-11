@@ -1,5 +1,6 @@
 package com.example.traveltogethersupabase.network
 
+import android.util.Log
 import com.example.frontendtt.data.Destino
 import com.example.frontendtt.data.DetalleViaje
 import com.example.frontendtt.data.Etapa
@@ -9,6 +10,7 @@ import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.data.NuevaEtapa
 import com.example.frontendtt.data.NuevoDestino
 import com.example.frontendtt.data.ParticipacionConUsuario
+import com.example.frontendtt.data.ParticipacionConViaje
 import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.data.UsuarioNombre
 import com.example.frontendtt.data.Viaje
@@ -122,15 +124,30 @@ suspend fun getDetalleViajesDelUsuario(): List<ListaViajes> {
     val userId = supabase.auth.currentUserOrNull()?.id
         ?: return emptyList()
 
-    val result = supabase
-        .postgrest["viaje"]
-        .select {
-            filter {
-                eq("idcreador", userId)
+    try {
+        val result = supabase
+            .postgrest["participacion"]
+            .select(columns = Columns.raw("idusuario, idviaje, viaje(id,idcreador,nombre,descripcion)")) { // Trae la participación + los datos del viaje
+                filter {
+                    eq("idusuario", userId) // Filtramos por el usuario actual
+                }
             }
-        }
 
-    return result.decodeList<ListaViajes>()
+        // Decodificamos la lista intermedia
+        val participaciones = result.decodeList<ParticipacionConViaje>()
+
+        // Mapeamos la lista para extraer solo los objetos 'viaje' de dentro
+        return participaciones.map { ListaViajes(
+            id = it.viaje.id,
+            idcreador = it.viaje.idcreador,
+            nombre = it.viaje.nombre,
+            descripcion = it.viaje.descripcion
+        ) }
+
+    } catch (e: Exception) {
+        Log.e("SUPABASE_ERROR", "Error al obtener viajes del usuario: ${e.message}")
+        return emptyList()
+    }
 }
 suspend fun getDetallesViaje(id: Int): DetalleViaje {
 
@@ -224,6 +241,16 @@ suspend fun borrarViaje(id: Int) {
         .delete {
             filter {
                 eq("id", id)
+            }
+        }
+}
+suspend fun borrarParticipacion(idusuario: String,idviaje: Int) {
+    supabase
+        .postgrest["participacion"]
+        .delete {
+            filter {
+                eq("idviaje", idviaje)
+                eq("idusuario", idusuario)
             }
         }
 }

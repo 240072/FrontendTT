@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.frontendtt.data.EtapaConDetalles
 import com.example.frontendtt.states.MenuState
 import com.example.traveltogethersupabase.network.buscarEtapasConDestinoYViaje
+import com.example.traveltogethersupabase.network.cerrarSesion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,6 +41,11 @@ class MenuViewModel: ViewModel () {
 
         }
         return listaDestinosState
+    }
+    fun closeSession(){
+        viewModelScope.launch {
+            cerrarSesion()
+        }
     }
     fun onInitialDateChange(fechainicio: String) {
         _menuState.update { it.copy(fechainicio = fechainicio) }

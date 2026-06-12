@@ -4,6 +4,7 @@ package com.example.frontendtt.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -282,8 +283,20 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                     }
                 }
 
-                OutlinedTextField(value = ubicacion, onValueChange = { }, readOnly = true, label = { Text("Ubicación") }, modifier = Modifier.fillMaxWidth().clickable { searchLocationText = ""; showLocationDialog = true }, enabled = false, trailingIcon = { Icon(Icons.Default.LocationOn, null, tint = TravelPrimaryBlue) })
-                editarViajeState.descripcion?.let { OutlinedTextField(value = it, onValueChange = { editarViajeViewModel.onDescriptionChange(it) }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), minLines = 3) }
+
+                    OutlinedTextField(value = ubicacion,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("Ubicación") },
+                        modifier = Modifier.fillMaxWidth().clickable { searchLocationText = ""; showLocationDialog = true },
+                        enabled = false,
+                        trailingIcon = { Icon(Icons.Default.LocationOn, null, tint = TravelPrimaryBlue) })
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { editarViajeViewModel.onDescriptionChange(it) },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3)
 
                 Text("Dificultad", fontWeight = FontWeight.Bold)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -296,9 +309,10 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                     //onClick = { if (nombre.isNotBlank()) onSave(DestinoViaje(destinoExistente?.id ?: 0, nombre, "$horaInicio - $horaFin", ubicacion, descripcion, dificultadSeleccionada, 0)) },
                     onClick = {
                         val duration = Duration.between(LocalTime.parse(editarViajeState.horainicio),LocalTime.parse(editarViajeState.horafin)).toHours()
-                        val idDestination = editarViajeViewModel.insertDestination(
-                        NuevoDestino(editarViajeState.nombre,editarViajeState.descripcion, editarViajeState.coordx,editarViajeState.coordy,editarViajeState.dificultad))
-                              editarViajeViewModel.insertStage(NuevaEtapa(viajeId, idDestination ?:0, editarViajeState.horainicio,duration.toInt()))},
+                        val destino = NuevoDestino(editarViajeState.nombre,editarViajeState.descripcion, editarViajeState.coordx,editarViajeState.coordy,editarViajeState.dificultad)
+                        val etapa = NuevaEtapa(idviaje = viajeId, horainicio = editarViajeState.horainicio, duracion = duration.toInt())
+                        editarViajeViewModel.insertDestination(destino, etapa)
+                        onDismiss()},
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)
@@ -349,6 +363,7 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                 
                 if (!resultados.isNullOrEmpty()) {
                     val direccion = resultados[0]
+                    editarViajeViewModel.onDescriptionChange(resultados[0].featureName)
                     editarViajeViewModel.onXCoordinateChange(direccion.longitude)
                     editarViajeViewModel.onYCoordinateChange(direccion.latitude)
                     Log.d("Point", editarViajeState.coordx.toString())
@@ -361,6 +376,8 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                         // Opcional: Actualiza el texto con el nombre oficial encontrado
                         searchLocationText = direccion.getAddressLine(0) ?: query
                     }
+                } else {
+                    Toast.makeText(context, "No se ha encontrado ningún resultado", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 e.printStackTrace() // Error de red o lugar no encontrado
@@ -461,6 +478,8 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                                 val eventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
                                     override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
                                         selectedGeoPoint = p
+                                        editarViajeViewModel.onYCoordinateChange(p.latitude)
+                                        editarViajeViewModel.onXCoordinateChange(p.longitude)
                                         searchLocationText = "Lat: ${String.format(Locale.US, "%.4f", p.latitude)}, Lng: ${String.format(Locale.US, "%.4f", p.longitude)}"
                                         return true
                                     }
@@ -489,8 +508,7 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                 // Botón Confirmar
                 Button(
                     onClick = { 
-                        // Te recomiendo guardar el string descriptivo, pero recuerda que el valor real está en 'selectedGeoPoint'
-                        //locationFilter = searchLocationText
+                        ubicacion = searchLocationText
                         showLocationDialog = false 
                     },
                     modifier = Modifier.fillMaxWidth(),

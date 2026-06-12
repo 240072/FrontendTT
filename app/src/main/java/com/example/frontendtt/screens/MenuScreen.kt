@@ -189,7 +189,7 @@ fun MenuScreen(navController: NavController) {
                     )
                 }
             }
-            //Button(onClick = { menuViewModel.closeSession() }){Text("Cerrar sesión")}
+            Button(onClick = { menuViewModel.closeSession() }){Text("Cerrar sesión")}
 
             /* 📅 SELECTOR FECHAS */
             Card(

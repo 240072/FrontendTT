@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 import com.example.frontendtt.ui.theme.*
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
@@ -31,7 +33,9 @@ import com.example.traveltogethersupabase.data.Mascota.opcionesMascota
 import com.example.frontendtt.viewmodels.LoginViewModel
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -41,7 +45,7 @@ fun RegisterScreen(navController: NavController) {
 
     val loginViewModel: LoginViewModel = viewModel()
     val loginState by loginViewModel.loginState.collectAsState()
-    
+    val context = LocalContext.current
 
     
     val mascotaSeleccionada = loginState.petOption
@@ -272,27 +276,30 @@ fun RegisterScreen(navController: NavController) {
 
                         if (todoEsValido) {
                         scope.launch {
+                            Log.d("Prueba","Entrando en el try")
                             try {
-                                // 1. Registrar en Auth (Esto crea el UUID en el esquema privado)
-                                val user = supabase.auth.signUpWith(Email) {
-                                    email = loginState.correo
-                                    password = loginState.password
 
-                                    // PASO CRÍTICO: Enviar metadatos para que el Trigger de SQL los reciba
-                                    data = buildJsonObject {
-                                        put("alias", loginState.alias)
-                                        put("nombre", loginState.name)
-                                        put("tabaco", tabacoSeleccionado)
-                                        put("mascota", mascotaSeleccionada)
+                                    Log.d("Función", "No debería entrar aquí")
+                                    // 1. Registrar en Auth (Esto crea el UUID en el esquema privado)
+                                    val user = supabase.auth.signUpWith(Email) {
+                                        email = loginState.correo
+                                        password = loginState.password
+
+                                        // PASO CRÍTICO: Enviar metadatos para que el Trigger de SQL los reciba
+                                        data = buildJsonObject {
+                                            put("alias", loginState.alias)
+                                            put("nombre", loginState.name)
+                                            put("tabaco", tabacoSeleccionado)
+                                            put("mascota", mascotaSeleccionada)
+                                        }
                                     }
-                                }
 
-                                // 2. ¿Necesitas llamar a enviarRegistro()?
-                                // Si configuraste el TRIGGER que te pasé antes en SQL,
-                                // ¡YA NO ES NECESARIO! El Trigger lo hace solo.
+                                    // 2. ¿Necesitas llamar a enviarRegistro()?
+                                    // Si configuraste el TRIGGER que te pasé antes en SQL,
+                                    // ¡YA NO ES NECESARIO! El Trigger lo hace solo.
 
-                                // Si NO usas trigger, tendrías que hacerlo así:
-                                /*
+                                    // Si NO usas trigger, tendrías que hacerlo así:
+                                    /*
                         val userId = user?.id ?: return@launch
                         val nuevoUsuario = RegistroUsuario(
                             id = userId, // Usamos el UUID real
@@ -302,16 +309,51 @@ fun RegisterScreen(navController: NavController) {
                         enviarRegistro(nuevoUsuario)
                         */
 
-                                Log.i("TAG", "Registro exitoso para: ${user?.email}")
+                                    Toast.makeText(
+                                        context,
+                                        "Te has registrado correctamente",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigate(AppScreens.LoginScreen.route)
 
-                            } catch (e: io.github.jan.supabase.exceptions.RestException) {
-                                // .toString() en las excepciones de Supabase suele formatear el JSON del error completo
-                                Log.e("TAG", "RestException detectado: ${e.toString()}")
-                                Log.e("TAG", "Mensaje del error: ${e.message}")
-                            } catch (e: Exception) {
-                                Log.e("TAG", "Error inesperado no relacionado con Supabase", e)
+                            } catch (e: AuthRestException) {
+                                // Capturamos el mensaje completo que nos envía el servidor
+                                val rawError = e.message ?: ""
+                                when {
+                                    // Evaluamos los textos exactos que acabamos de ver en tu log de Supabase
+
+                                    rawError.contains("User already registered", ignoreCase = true) -> {
+                                        Toast.makeText(context, "El correo introducido ya existe", Toast.LENGTH_SHORT).show()
+                                    }
+                                    else -> {
+                                        // Por si ocurre otro error de base de datos diferente (ej. 500)
+                                        Toast.makeText(context, "El alias introducido ya existe", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+
+                            }catch (e: Exception){
+                                // Capturamos el mensaje completo que nos envía el servidor
+                                val rawError = e.message ?: ""
+                                Log.d("Mensaje de error", e.message?:"")
+
+                                when {
+                                    // Evaluamos los textos exactos que acabamos de ver en tu log de Supabase
+                                    rawError.contains("Database error saving new user", ignoreCase = true) ||
+                                            rawError.contains("unexpected_failure", ignoreCase = true) -> {
+                                        Toast.makeText(context, "El alias introducido ya existe", Toast.LENGTH_SHORT).show()
+                                    }
+                                    rawError.contains("correo", ignoreCase = true) -> {
+                                        Toast.makeText(context, "El correo introducido ya existe", Toast.LENGTH_SHORT).show()
+                                    }
+                                    else -> {
+                                        // Por si ocurre otro error de base de datos diferente (ej. 500)
+                                        Toast.makeText(context, "El alias introducido ya existe", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                e.printStackTrace() // Para que puedas seguir viéndolo en el Logcat de Android Studio
                             }
-                        } } },
+
+                        }} } ,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

@@ -244,6 +244,21 @@ suspend fun borrarViaje(id: Int) {
             }
         }
 }
+suspend fun verificarSiAliasExiste(alias: String): Boolean {
+    return try {
+        // Hacemos una consulta rápida buscando si alguien tiene ese alias
+        val resultado = supabase.from("usuario")
+            .select {
+                filter {
+                    eq("alias", alias)
+                }
+            }
+        // Si la lista no está vacía, es que el alias ya existe
+        resultado.data != "[]"
+    } catch (e: Exception) {
+        false // Si falla la consulta, asumimos que no existe o lo manejará el registro
+    }
+}
 suspend fun borrarParticipacion(idusuario: String,idviaje: Int) {
     supabase
         .postgrest["participacion"]

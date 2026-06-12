@@ -73,16 +73,14 @@ class EditarViajeViewModel: ViewModel() {
         }
 
     }
-    fun insertDestination(nuevoDestino: NuevoDestino): Int? {
+    fun insertDestination(nuevoDestino: NuevoDestino, nuevaEtapa: NuevaEtapa) {
         viewModelScope.launch {
             idDestinoState = registrarDestino(nuevoDestino)
+            if (idDestinoState != 0) {
+                val copiarIdEnEtapa = nuevaEtapa.copy(iddestino = idDestinoState!!)
+                registrarEtapa(copiarIdEnEtapa)
+            }
+        }
+    }
 
-        }
-        return idDestinoState
-    }
-    fun insertStage(nuevaEtapa: NuevaEtapa) {
-        viewModelScope.launch {
-            registrarEtapa(nuevaEtapa)
-        }
-    }
 }

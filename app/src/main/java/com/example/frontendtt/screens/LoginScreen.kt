@@ -180,15 +180,11 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                                             email = loginState.correo
                                             password = loginState.password
                                         }
-                                        Log.d(
-                                            "AUTH",
-                                            "session=${supabase.auth.currentSessionOrNull()}"
-                                        )
-
-                                        Log.d(
-                                            "AUTH",
-                                            "user=${supabase.auth.currentUserOrNull()}"
-                                        )
+                                        Toast.makeText(
+                                            context,
+                                            "Login exitoso",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         navController.navigate(AppScreens.MenuScreen.route)
                                     } catch (e: Exception) {
                                         Toast.makeText(

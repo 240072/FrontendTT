@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.frontendtt.data.Destino
 import com.example.frontendtt.data.DetalleViaje
 import com.example.frontendtt.data.Etapa
+import com.example.frontendtt.data.EtapaConDestino
 import com.example.frontendtt.data.EtapaConDetalles
 import com.example.frontendtt.data.EtapaDetalle
 import com.example.frontendtt.data.ListaViajes
@@ -21,6 +22,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 
 suspend fun enviarRegistro(usuario: RegistroUsuario) {
     try {
@@ -67,11 +69,15 @@ suspend fun registrarDestino(destino: NuevoDestino): Int? {
         null // Si hay un error (ej. sin internet), devolvemos null
     }
 }
-suspend fun registrarEtapa(etapa: NuevaEtapa){
-    try {
-        // Al añadir .select(), Supabase devuelve la fila creada
-        supabase.from("etapa")
-            .insert(etapa)
+suspend fun registrarEtapa(etapa: NuevaEtapa):Int?{
+    return try {
+        val response = supabase.from("etapa")
+            .insert(etapa) {
+                select()
+            }
+            .decodeSingle<Etapa>()
+
+        response.id
     } catch (e: Exception) {
         e.printStackTrace()
         null // Si hay un error (ej. sin internet), devolvemos null
@@ -224,7 +230,7 @@ suspend fun obtenerEtapasDetalle(idViaje: Int): List<EtapaDetalle> {
             destino?.let {
                 EtapaDetalle(
                     horainicio = etapa.horainicio,
-                    duracion = etapa.duracion,
+                    horafin = etapa.horafin,
                     destino = it
                 )
             }
@@ -258,6 +264,42 @@ suspend fun verificarSiAliasExiste(alias: String): Boolean {
     } catch (e: Exception) {
         false // Si falla la consulta, asumimos que no existe o lo manejará el registro
     }
+}
+suspend fun eliminarEtapa(id: Int) {
+
+    supabase.postgrest["etapa"].delete {
+        // Usamos el ID de la etapa para asegurar tiro fijo
+        filter { eq("id", id) }
+    }
+}
+suspend fun obtenerDestinosPorDia(idViaje: Int,diaviaje: Int): List<EtapaConDestino>{
+    Log.d("QUERY", "idViaje=$idViaje")
+    Log.d("QUERY", "diaviaje=$diaviaje")
+  return supabase.postgrest["etapa"].select(columns = Columns.raw("*, destino(*)")) {
+        filter {
+            eq("diaviaje", diaviaje) // Filtro directo sin necesidad de !inner
+            eq("idviaje", idViaje)
+        }
+        order("horainicio", order = Order.ASCENDING)
+    }
+        .decodeList<EtapaConDestino>()
+
+}
+suspend fun actualizarDestino(destino: Destino) {
+    supabase.from("destino")
+        .update(destino) {
+            filter {
+                eq("id", destino.id)
+            }
+        }
+}
+suspend fun actualizarEtapa(etapa: Etapa) {
+    supabase.from("etapa")
+        .update(etapa) {
+            filter {
+                eq("id", etapa.id)
+            }
+        }
 }
 suspend fun borrarParticipacion(idusuario: String,idviaje: Int) {
     supabase

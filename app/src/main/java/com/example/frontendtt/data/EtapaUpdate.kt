@@ -3,11 +3,8 @@ package com.example.frontendtt.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Etapa(
-    val id: Int,
-    val idviaje: Int,
-    val iddestino: Int,
+data class EtapaUpdate(
     val horainicio: String,
     val horafin: String,
-    val diaviaje: Int
+
 )

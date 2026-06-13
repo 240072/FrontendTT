@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 data class EtapaConDetalles(
     val id: Int,
     val horainicio: String,
-    val duracion: Int,
+    val horafin: String,
     val destino: DestinoDto, // Coincide con el nodo 'destino' del select
     val viaje: ViajeDto      // Coincide con el nodo 'viaje' del select
 )

@@ -3,8 +3,7 @@ package com.example.frontendtt.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Destino(
-    val id: Int,
+data class DestinoUpdate(
     val nombre: String,
     val ubicacion: String,
     val descripcion: String,

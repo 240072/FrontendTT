@@ -55,22 +55,15 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import java.util.Locale
 import com.example.frontendtt.data.Dificultad.opcionesDificultad
+import com.example.frontendtt.data.EtapaConDestino
 import com.example.frontendtt.data.NuevaEtapa
 import com.example.frontendtt.data.NuevoDestino
+import com.example.frontendtt.states.EditarViajeState
+import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalTime
 import java.time.Duration
-
-data class DestinoViaje(
-    val id: Int,
-    val nombre: String,
-    val hora: String,
-    val ubicacion: String,
-    val descripcion: String,
-    val dificultad: String,
-    val diaAsociado: Int
-)
 
 @Composable
 fun EditarViajeScreen(navController: NavController, viajeId: Int) {
@@ -78,23 +71,47 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
     val editarViajeState by editarViajeViewModel.editarViajeState.collectAsState()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    //var cantidadDias = remember{ editarViajeViewModel.diasState}
-    //val cantidadDias = 4
-    //val diasDisponibles = List(cantidadDias) { "Día ${it + 1}" }
     val diasDisponibles = editarViajeViewModel.diasDisponiblesState
-    var diaSeleccionadoIndex by remember { mutableIntStateOf(0) }
-
-    var listaDestinos by remember { mutableStateOf(mutableListOf<DestinoViaje>()) }
     var mostrarFormulario by remember { mutableStateOf(false) }
-    var destinoAEditar by remember { mutableStateOf<DestinoViaje?>(null) }
-    var destinoAEliminar by remember { mutableStateOf<DestinoViaje?>(null) }
-    var destinoAVer by remember { mutableStateOf<DestinoViaje?>(null) }
+    var destinoAEditar by remember { mutableStateOf<EtapaConDestino?>(null) }
+    var destinoAEliminar by remember { mutableStateOf<EtapaConDestino?>(null) }
+    var destinoAVer by remember { mutableStateOf<EtapaConDestino?>(null) }
 
-    val destinosFiltrados = listaDestinos.filter { it.diaAsociado == diaSeleccionadoIndex }
     LaunchedEffect(viajeId) {
         editarViajeViewModel.getTripInfo(viajeId)
     }
-    val viaje = editarViajeViewModel.viajeState
+
+    LaunchedEffect(viajeId, editarViajeState.diaviaje) {
+        editarViajeViewModel.getDestinationsByDay(
+            viajeId,
+            editarViajeState.diaviaje
+        )
+    }
+
+    // EFECTO NUEVO: Escucha cambios en destinoAEditar para precargar o limpiar el formulario
+    LaunchedEffect(destinoAEditar) {
+        if (destinoAEditar != null) {
+            editarViajeViewModel.onNameChange(destinoAEditar!!.destino.nombre)
+            editarViajeViewModel.onLocationChange(destinoAEditar!!.destino.ubicacion)
+            editarViajeViewModel.onDescriptionChange(destinoAEditar!!.destino.descripcion)
+            editarViajeViewModel.onInitialHourChange(destinoAEditar!!.horainicio)
+            editarViajeViewModel.onFinalHourChange(destinoAEditar!!.horafin)
+            editarViajeViewModel.onXCoordinateChange(destinoAEditar!!.destino.coordx)
+            editarViajeViewModel.onYCoordinateChange(destinoAEditar!!.destino.coordy)
+            editarViajeViewModel.onDificultyChange(destinoAEditar!!.destino.dificultad)
+        } else {
+            // Limpieza si es un nuevo destino
+            editarViajeViewModel.onNameChange("")
+            editarViajeViewModel.onLocationChange("")
+            editarViajeViewModel.onDescriptionChange("")
+            editarViajeViewModel.onInitialHourChange("00:00")
+            editarViajeViewModel.onFinalHourChange("00:00")
+            editarViajeViewModel.onXCoordinateChange(0.0)
+            editarViajeViewModel.onYCoordinateChange(0.0)
+            editarViajeViewModel.onDificultyChange(0)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -120,12 +137,13 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                     Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         diasDisponibles.forEachIndexed { index, label ->
                             FilterChip(
-                                selected = diaSeleccionadoIndex == index,
-                                onClick = { diaSeleccionadoIndex = index },
+                                selected = editarViajeState.diaviaje == index,
+                                onClick = { editarViajeViewModel.onTripDayChange(index) },
                                 label = { Text(label, fontSize = 12.sp) },
                                 colors = FilterChipDefaults.filterChipColors(selectedContainerColor = TravelPrimaryBlue, selectedLabelColor = Color.White),
                                 shape = RoundedCornerShape(10.dp)
                             )
+                            Log.d("Lista", editarViajeViewModel.etapasPorDiaState.toString())
                         }
                     }
                 }
@@ -133,11 +151,11 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                 Text("Destinos del día", modifier = Modifier.fillMaxWidth(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
 
                 LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
-                    items(destinosFiltrados) { destino ->
+                    items(editarViajeViewModel.etapasPorDiaState) { destino ->
                         DestinoItem(
-                            nombre = destino.nombre,
-                            hora = destino.hora,
-                            ubicacion = destino.ubicacion,
+                            nombre = destino.destino.nombre,
+                            hora = destino.horainicio,
+                            ubicacion = destino.destino.ubicacion,
                             onEdit = { destinoAEditar = destino; mostrarFormulario = true },
                             onDelete = { destinoAEliminar = destino },
                             onClick = { destinoAVer = destino }
@@ -157,14 +175,14 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                 }
 
                 Button(
-                    onClick = { scope.launch { snackbarHostState.showSnackbar("Viaje guardado") } },
+                    onClick = { navController.navigate(AppScreens.MenuScreen.route) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = TravelDeepNavy)
                 ) {
                     Icon(Icons.Default.Save, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Guardar Viaje", fontWeight = FontWeight.Bold)
+                    Text("Guardar y volver al menú", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -173,18 +191,10 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
             FormularioDestinoDialog(
                 destinoExistente = destinoAEditar,
                 onDismiss = { mostrarFormulario = false },
-                onSave = { nuevoDestino ->
-                    if (destinoAEditar == null) {
-                        listaDestinos.add(nuevoDestino.copy(id = listaDestinos.size + 1, diaAsociado = diaSeleccionadoIndex))
-                        scope.launch { snackbarHostState.showSnackbar("Destino agregado correctamente") }
-                    } else {
-                        val index = listaDestinos.indexOfFirst { it.id == destinoAEditar!!.id }
-                        listaDestinos[index] = nuevoDestino
-                        scope.launch { snackbarHostState.showSnackbar("Cambios guardados") }
-                    }
-                    mostrarFormulario = false
-                },
-                viajeId = viajeId
+                onSave = { mostrarFormulario = false },
+                viajeId = viajeId,
+                editarViajeViewModel = editarViajeViewModel,
+                editarViajeState = editarViajeState
             )
         }
 
@@ -193,22 +203,22 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                 onDismissRequest = { destinoAVer = null },
                 confirmButton = { TextButton(onClick = { destinoAVer = null }) { Text("Cerrar", color = TravelPrimaryBlue, fontWeight = FontWeight.Bold) } },
                 icon = { Icon(Icons.Default.Info, contentDescription = null, tint = TravelDeepNavy) },
-                title = { Text(destinoAVer!!.nombre, fontWeight = FontWeight.Bold) },
+                title = { Text(destinoAVer!!.destino.nombre, fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Schedule, null, modifier = Modifier.size(16.dp), tint = Color.Gray); Spacer(Modifier.width(8.dp)); Text(destinoAVer!!.hora) }
-                        Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.LocationOn, null, modifier = Modifier.size(16.dp), tint = Color.Gray); Spacer(Modifier.width(8.dp)); Text(destinoAVer!!.ubicacion) }
+                        Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Schedule, null, modifier = Modifier.size(16.dp), tint = Color.Gray); Spacer(Modifier.width(8.dp)); Text(destinoAVer!!.horainicio) }
+                        Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.LocationOn, null, modifier = Modifier.size(16.dp), tint = Color.Gray); Spacer(Modifier.width(8.dp)); Text(destinoAVer!!.destino.ubicacion) }
                         HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
-                        Text("Descripción:", fontWeight = FontWeight.Bold); Text(destinoAVer!!.descripcion)
+                        Text("Descripción:", fontWeight = FontWeight.Bold); Text(destinoAVer!!.destino.descripcion)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Dificultad: ", fontWeight = FontWeight.Bold)
-                            val (emoji, color) = when (destinoAVer!!.dificultad) {
-                                "Alta" -> "🔴" to Color.Red
-                                "Media" -> "🟠" to Color(0xFFF57C00)
-                                "Baja" -> "🟢" to TravelPrimaryBlue
+                            val (emoji, color) = when (destinoAVer!!.destino.dificultad) {
+                                2 -> "🔴" to Color.Red
+                                1 -> "🟠" to Color(0xFFF57C00)
+                                0 -> "🟢" to TravelPrimaryBlue
                                 else -> "⚪" to Color.Gray
                             }
-                            Text("$emoji ${destinoAVer!!.dificultad}", color = color, fontWeight = FontWeight.Bold)
+                            Text("$emoji ${opcionesDificultad[destinoAVer!!.destino.dificultad]}", color = color, fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -224,7 +234,7 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                 text = { Text("¿Seguro que quieres eliminar este destino?") },
                 confirmButton = {
                     TextButton(onClick = {
-                        listaDestinos.removeIf { it.id == destinoAEliminar?.id }
+                        editarViajeViewModel.deleteStage(destinoAEliminar?.id ?: 0, viajeId, editarViajeState.diaviaje)
                         scope.launch { snackbarHostState.showSnackbar("Destino eliminado") }
                         destinoAEliminar = null
                     }) { Text("Eliminar", color = Color.Red) }
@@ -237,21 +247,16 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Unit, onSave: (DestinoViaje) -> Unit, viajeId: Int) {
-    val editarViajeViewModel : EditarViajeViewModel = viewModel()
-    val editarViajeState by editarViajeViewModel.editarViajeState.collectAsState()
-    var nombre by remember { mutableStateOf(destinoExistente?.nombre ?: "") }
-    val horasIniciales = destinoExistente?.hora?.split(" - ")
-    var horaInicio by remember { mutableStateOf(horasIniciales?.getOrNull(0) ?: "08:00") }
-    var horaFin by remember { mutableStateOf(horasIniciales?.getOrNull(1) ?: "09:00") }
-    var ubicacion by remember { mutableStateOf(destinoExistente?.ubicacion ?: "") }
-    var descripcion by remember { mutableStateOf(destinoExistente?.descripcion ?: "") }
-    val dificultades = listOf("Baja", "Media", "Alta")
-    //var dificultadSeleccionada by remember { mutableStateOf(destinoExistente?.dificultad ?: "Media") }
-    var dificultadSeleccionada = editarViajeState.dificultad
+fun FormularioDestinoDialog(
+    destinoExistente: EtapaConDestino?,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit,
+    viajeId: Int,
+    editarViajeViewModel : EditarViajeViewModel,
+    editarViajeState: EditarViajeState
+) {
     var showInicioPicker by remember { mutableStateOf(false) }
     var showFinPicker by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     var showLocationDialog by remember { mutableStateOf(false) }
     var searchLocationText by remember { mutableStateOf("") }
 
@@ -283,40 +288,66 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
                     }
                 }
 
-
-                    OutlinedTextField(value = ubicacion,
-                        onValueChange = { },
-                        readOnly = true,
-                        label = { Text("Ubicación") },
-                        modifier = Modifier.fillMaxWidth().clickable { searchLocationText = ""; showLocationDialog = true },
-                        enabled = false,
-                        trailingIcon = { Icon(Icons.Default.LocationOn, null, tint = TravelPrimaryBlue) })
                 OutlinedTextField(
-                    value = descripcion,
+                    value = editarViajeState.ubicacion,
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Ubicación") },
+                    modifier = Modifier.fillMaxWidth().clickable { searchLocationText = ""; showLocationDialog = true },
+                    enabled = false,
+                    trailingIcon = { Icon(Icons.Default.LocationOn, null, tint = TravelPrimaryBlue) }
+                )
+
+                OutlinedTextField(
+                    value = editarViajeState.descripcion,
                     onValueChange = { editarViajeViewModel.onDescriptionChange(it) },
                     label = { Text("Descripción") },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 3)
+                    minLines = 3
+                )
 
                 Text("Dificultad", fontWeight = FontWeight.Bold)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     opcionesDificultad.forEach { (index, diff) ->
-                        SegmentedButton(selected = (index == dificultadSeleccionada), onClick = { editarViajeViewModel.onDificultyChange(if (dificultadSeleccionada == index) 1 else index) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = opcionesDificultad.size)) { Text(diff, fontSize = 10.sp) }
+                        SegmentedButton(
+                            selected = (index == editarViajeState.dificultad),
+                            onClick = { editarViajeViewModel.onDificultyChange(index) },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = opcionesDificultad.size)
+                        ) { Text(diff, fontSize = 10.sp) }
                     }
                 }
 
                 Button(
-                    //onClick = { if (nombre.isNotBlank()) onSave(DestinoViaje(destinoExistente?.id ?: 0, nombre, "$horaInicio - $horaFin", ubicacion, descripcion, dificultadSeleccionada, 0)) },
                     onClick = {
-                        val duration = Duration.between(LocalTime.parse(editarViajeState.horainicio),LocalTime.parse(editarViajeState.horafin)).toHours()
-                        val destino = NuevoDestino(editarViajeState.nombre,editarViajeState.descripcion, editarViajeState.coordx,editarViajeState.coordy,editarViajeState.dificultad)
-                        val etapa = NuevaEtapa(idviaje = viajeId, horainicio = editarViajeState.horainicio, duracion = duration.toInt())
-                        editarViajeViewModel.insertDestination(destino, etapa)
-                        onDismiss()},
+                        if (destinoExistente == null) {
+                            // INSERTAR NUEVO
+                            val destino = NuevoDestino(editarViajeState.nombre, editarViajeState.ubicacion, editarViajeState.descripcion, editarViajeState.coordx, editarViajeState.coordy, editarViajeState.dificultad)
+                            val etapa = NuevaEtapa(idviaje = viajeId, horainicio = editarViajeState.horainicio, horafin = editarViajeState.horafin, diaviaje = editarViajeState.diaviaje)
+                            editarViajeViewModel.insertDestination(destino, etapa, viajeId, editarViajeState.diaviaje)
+                        } else {
+                            // ACTUALIZAR EXISTENTE
+                            editarViajeViewModel.updateDestination(
+                                etapaOriginal = destinoExistente,
+                                nuevoNombre = editarViajeState.nombre,
+                                nuevaUbicacion = editarViajeState.ubicacion,
+                                nuevaDescripcion = editarViajeState.descripcion,
+                                nuevaHoraInicio = editarViajeState.horainicio,
+                                nuevaHoraFin = editarViajeState.horafin,
+                                nuevaCoordX = editarViajeState.coordx,
+                                nuevaCoordY = editarViajeState.coordy,
+                                nuevaDificultad = editarViajeState.dificultad,
+                                viajeId = viajeId,
+                                diaActual = editarViajeState.diaviaje
+                            )
+                        }
+                        onDismiss()
+                    },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)
-                ) { Text(if (destinoExistente == null) "Agregar" else "Guardar") }
+                ) {
+                    Text(if (destinoExistente == null) "Agregar" else "Guardar")
+                }
             }
         }
     }
@@ -325,245 +356,179 @@ fun FormularioDestinoDialog(destinoExistente: DestinoViaje?, onDismiss: () -> Un
     if (showFinPicker) { TimePickerView(onDismiss = { showFinPicker = false }, onConfirm = { h, m -> editarViajeViewModel.onFinalHourChange(String.format(Locale.US, "%02d:%02d", h, m)); showFinPicker = false }) }
 
     if (showLocationDialog) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val lifecycleOwner = LocalLifecycleOwner.current
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+        val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 1. Estado para guardar la coordenada seleccionada (empieza en Jaca por defecto)
-    var selectedGeoPoint by remember { mutableStateOf(GeoPoint(42.5689, -0.5496)) }
+        var selectedGeoPoint by remember { mutableStateOf(GeoPoint(42.5689, -0.5496)) }
 
-    var hasLocationPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-    
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasLocationPermission = isGranted
-    }
-
-    LaunchedEffect(Unit) {
-        if (!hasLocationPermission) {
-            launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        var hasLocationPermission by remember {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            )
         }
-    }
 
-    // Función interna para buscar el texto en la base de datos de mapas
-    fun buscarLugar(query: String) {
-        if (query.isBlank()) return
-        
-        // El Geocoder hace una petición de red, por lo que usamos Dispatchers.IO
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                val geocoder = android.location.Geocoder(context, Locale.getDefault())
-                // Buscamos solo el primer resultado más preciso
-                val resultados = geocoder.getFromLocationName(query, 1)
-                
-                if (!resultados.isNullOrEmpty()) {
-                    val direccion = resultados[0]
-                    editarViajeViewModel.onDescriptionChange(resultados[0].featureName)
-                    editarViajeViewModel.onXCoordinateChange(direccion.longitude)
-                    editarViajeViewModel.onYCoordinateChange(direccion.latitude)
-                    Log.d("Point", editarViajeState.coordx.toString())
-                    Log.d("Point", editarViajeState.coordy.toString())
-                    val nuevoPunto = GeoPoint(direccion.latitude, direccion.longitude)
-                    
-                    // Volvemos al hilo principal para actualizar la UI de Compose
-                    withContext(Dispatchers.Main) {
-                        selectedGeoPoint = nuevoPunto
-                        // Opcional: Actualiza el texto con el nombre oficial encontrado
-                        searchLocationText = direccion.getAddressLine(0) ?: query
-                    }
-                } else {
-                    Toast.makeText(context, "No se ha encontrado ningún resultado", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace() // Error de red o lugar no encontrado
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            hasLocationPermission = isGranted
+        }
+
+        LaunchedEffect(Unit) {
+            if (!hasLocationPermission) {
+                launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
-    }
 
-    Dialog(onDismissRequest = { showLocationDialog = false }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(550.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Cabecera
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Elegir Destino",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = TravelPrimaryBlue
-                    )
-                    IconButton(onClick = { showLocationDialog = false }) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar")
-                    }
-                }
+        fun buscarLugar(query: String) {
+            if (query.isBlank()) return
 
-                // Buscador optimizado con botón de buscar y acción de teclado
-                OutlinedTextField(
-                    value = searchLocationText,
-                    onValueChange = { searchLocationText = it },
-                    label = { Text("Nombre del lugar") },
-                    placeholder = { Text("Ej: Playa de las Catedrales") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    trailingIcon = {
-                        IconButton(onClick = { buscarLugar(searchLocationText) }) {
-                            Icon(Icons.Default.Search, contentDescription = "Buscar lugar")
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val geocoder = android.location.Geocoder(context, Locale.getDefault())
+                    val resultados = geocoder.getFromLocationName(query, 1)
+
+                    if (!resultados.isNullOrEmpty()) {
+                        val direccion = resultados[0]
+
+                        editarViajeViewModel.onXCoordinateChange(direccion.longitude)
+                        editarViajeViewModel.onYCoordinateChange(direccion.latitude)
+                        val nuevoPunto = GeoPoint(direccion.latitude, direccion.longitude)
+
+                        withContext(Dispatchers.Main) {
+                            selectedGeoPoint = nuevoPunto
+                            searchLocationText = direccion.getAddressLine(0) ?: query
                         }
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { buscarLugar(searchLocationText) })
-                )
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "No se ha encontrado ningún resultado", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
 
-                // Contenedor del Mapa
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFEEEEEE))
-                        .border(1.dp, Color.LightGray, RoundedCornerShape(20.dp)),
-                    contentAlignment = Alignment.Center
+        Dialog(onDismissRequest = { showLocationDialog = false }) {
+            Card(
+                modifier = Modifier.fillMaxWidth().height(550.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    AndroidView<MapView>(
-                        factory = { ctx ->
-                            Configuration.getInstance().userAgentValue = ctx.packageName
-                            MapView(ctx).apply {
-                                setTileSource(TileSourceFactory.MAPNIK)
-                                setMultiTouchControls(true)
-                                controller.setZoom(15.0)
-                                controller.setCenter(selectedGeoPoint)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Elegir Destino", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TravelPrimaryBlue)
+                        IconButton(onClick = { showLocationDialog = false }) {
+                            Icon(Icons.Default.Close, contentDescription = "Cerrar")
+                        }
+                    }
 
-                                // CORRECCIÓN: El ciclo de vida se registra aquí UNA sola vez para evitar fugas de memoria
-                                val observer = LifecycleEventObserver { _, event ->
-                                    when (event) {
-                                        Lifecycle.Event.ON_RESUME -> onResume()
-                                        Lifecycle.Event.ON_PAUSE -> onPause()
-                                        else -> {}
-                                    }
-                                }
-                                lifecycleOwner.lifecycle.addObserver(observer)
-
-                                // Si hay permiso de GPS, centra la pantalla en el usuario al abrir
-                                if (hasLocationPermission) {
-                                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
-                                    try {
-                                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                            if (location != null) {
-                                                val userPoint = GeoPoint(location.latitude, location.longitude)
-                                                selectedGeoPoint = userPoint
-                                            }
-                                        }
-                                    } catch (e: SecurityException) {}
-                                }
-
-                                // Listener para cuando el usuario toca manualmente cualquier punto del mapa
-                                val eventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
-                                    override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-                                        selectedGeoPoint = p
-                                        editarViajeViewModel.onYCoordinateChange(p.latitude)
-                                        editarViajeViewModel.onXCoordinateChange(p.longitude)
-                                        searchLocationText = "Lat: ${String.format(Locale.US, "%.4f", p.latitude)}, Lng: ${String.format(Locale.US, "%.4f", p.longitude)}"
-                                        return true
-                                    }
-                                    override fun longPressHelper(p: GeoPoint): Boolean = false
-                                })
-                                overlays.add(eventsOverlay)
+                    OutlinedTextField(
+                        value = searchLocationText,
+                        onValueChange = { searchLocationText = it },
+                        label = { Text("Nombre del lugar") },
+                        placeholder = { Text("Ej: Playa de las Catedrales") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { buscarLugar(searchLocationText) }) {
+                                Icon(Icons.Default.Search, contentDescription = "Buscar lugar")
                             }
                         },
-                        update = { mapView ->
-                            // Cada vez que cambia 'selectedGeoPoint', refrescamos el marcador y movemos la cámara
-                            mapView.overlays.removeAll { it is Marker }
-                            
-                            val marker = Marker(mapView).apply {
-                                position = selectedGeoPoint
-                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                                title = "Destino seleccionado"
-                            }
-                            
-                            mapView.overlays.add(marker)
-                            mapView.controller.animateTo(selectedGeoPoint)
-                            mapView.invalidate() // Fuerza el redibujado del mapa
-                        }
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { buscarLugar(searchLocationText) })
                     )
-                }
 
-                // Botón Confirmar
-                Button(
-                    onClick = { 
-                        ubicacion = searchLocationText
-                        showLocationDialog = false 
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)
-                ) {
-                    Text("Confirmar")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0xFFEEEEEE))
+                            .border(1.dp, Color.LightGray, RoundedCornerShape(20.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AndroidView<MapView>(
+                            factory = { ctx ->
+                                Configuration.getInstance().userAgentValue = ctx.packageName
+                                MapView(ctx).apply {
+                                    setTileSource(TileSourceFactory.MAPNIK)
+                                    setMultiTouchControls(true)
+                                    controller.setZoom(15.0)
+                                    controller.setCenter(selectedGeoPoint)
+
+                                    val observer = LifecycleEventObserver { _, event ->
+                                        when (event) {
+                                            Lifecycle.Event.ON_RESUME -> onResume()
+                                            Lifecycle.Event.ON_PAUSE -> onPause()
+                                            else -> {}
+                                        }
+                                    }
+                                    lifecycleOwner.lifecycle.addObserver(observer)
+
+                                    if (hasLocationPermission) {
+                                        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
+                                        try {
+                                            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                                if (location != null) {
+                                                    val userPoint = GeoPoint(location.latitude, location.longitude)
+                                                    selectedGeoPoint = userPoint
+                                                }
+                                            }
+                                        } catch (e: SecurityException) {}
+                                    }
+
+                                    val eventsOverlay = MapEventsOverlay(object : MapEventsReceiver {
+                                        override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
+                                            selectedGeoPoint = p
+                                            editarViajeViewModel.onYCoordinateChange(p.latitude)
+                                            editarViajeViewModel.onXCoordinateChange(p.longitude)
+                                            searchLocationText = "Lat: ${String.format(Locale.US, "%.4f", p.latitude)}, Lng: ${String.format(Locale.US, "%.4f", p.longitude)}"
+                                            return true
+                                        }
+                                        override fun longPressHelper(p: GeoPoint): Boolean = false
+                                    })
+                                    overlays.add(eventsOverlay)
+                                }
+                            },
+                            update = { mapView ->
+                                mapView.overlays.removeAll { it is Marker }
+                                val marker = Marker(mapView).apply {
+                                    position = selectedGeoPoint
+                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                    title = "Destino seleccionado"
+                                }
+                                mapView.overlays.add(marker)
+                                mapView.controller.animateTo(selectedGeoPoint)
+                                mapView.invalidate()
+                            }
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            editarViajeViewModel.onLocationChange(searchLocationText)
+                            showLocationDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)
+                    ) {
+                        Text("Confirmar")
+                    }
                 }
             }
         }
     }
-}
-    // if (showLocationDialog) {
-    //     var hasLocationPermission by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) }
-    //     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasLocationPermission = it }
-    //     LaunchedEffect(Unit) { if (!hasLocationPermission) launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
-
-    //     Dialog(onDismissRequest = { showLocationDialog = false }) {
-    //         Card(modifier = Modifier.fillMaxWidth().height(550.dp), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-    //             Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-    //                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-    //                     Text("Elegir Ubicación", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TravelPrimaryBlue)
-    //                     IconButton(onClick = { showLocationDialog = false }) { Icon(Icons.Default.Close, null) }
-    //                 }
-    //                 OutlinedTextField(value = searchLocationText, onValueChange = { searchLocationText = it }, label = { Text("Nombre del lugar") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-
-    //                 val lifecycleOwner = LocalLifecycleOwner.current
-    //                 Box(modifier = Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(20.dp)).background(Color(0xFFEEEEEE)).border(1.dp, Color.LightGray, RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
-    //                     AndroidView<MapView>(factory = { ctx ->
-    //                         Configuration.getInstance().userAgentValue = ctx.packageName
-    //                         MapView(ctx).apply {
-    //                             setTileSource(TileSourceFactory.MAPNIK); setMultiTouchControls(true); controller.setZoom(15.0)
-    //                             val defaultPoint = GeoPoint(42.5689, -0.5496); controller.setCenter(defaultPoint)
-    //                             if (hasLocationPermission) {
-    //                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(ctx)
-    //                                 try { fusedLocationClient.lastLocation.addOnSuccessListener { if (it != null) controller.animateTo(GeoPoint(it.latitude, it.longitude)) } } catch (e: SecurityException) {}
-    //                             }
-    //                             overlays.add(MapEventsOverlay(object : MapEventsReceiver {
-    //                                 override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
-    //                                     searchLocationText = "Lat: ${String.format(Locale.US, "%.4f", p.latitude)}, Lng: ${String.format(Locale.US, "%.4f", p.longitude)}"
-    //                                     overlays.removeAll { it is Marker }; val marker = Marker(this@apply); marker.position = p; marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM); overlays.add(marker); invalidate(); return true
-    //                                 }
-    //                                 override fun longPressHelper(p: GeoPoint): Boolean = false
-    //                             }))
-    //                         }
-    //                     }, update = { mv ->
-    //                         val observer = LifecycleEventObserver { _, e -> when (e) { Lifecycle.Event.ON_RESUME -> mv.onResume(); Lifecycle.Event.ON_PAUSE -> mv.onPause(); else -> {} } }
-    //                         lifecycleOwner.lifecycle.addObserver(observer)
-    //                     })
-    //                 }
-    //                 Button(onClick = { ubicacion = searchLocationText; showLocationDialog = false }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)) { Text("Confirmar") }
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

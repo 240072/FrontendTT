@@ -235,8 +235,8 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     destino.destino.descripcion?.let { Text(it) }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = Color.Gray.copy(alpha = 0.2f))
-                    Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text(destino.horainicio)}
-                    Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); Text(destino.destino.coordx.toString()) }
+                    Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text("${destino.horainicio} - ${destino.horafin}")}
+                    Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); Text(destino.destino.ubicacion) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Dificultad: ", fontWeight = FontWeight.Bold)
                         val (emoji, color) = when (destino.destino.dificultad) {

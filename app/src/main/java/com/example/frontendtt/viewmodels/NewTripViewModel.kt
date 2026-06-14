@@ -1,7 +1,6 @@
 package com.example.frontendtt.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.example.frontendtt.states.LoginState
 import com.example.traveltogethersupabase.states.TripState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

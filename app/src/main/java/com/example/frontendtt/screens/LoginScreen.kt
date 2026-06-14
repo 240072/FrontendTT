@@ -1,17 +1,14 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -30,15 +27,10 @@ import com.example.frontendtt.components.SecondaryTravelButton
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.LoginViewModel
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
-// import com.example.frontendtt.viewmodels.LoginViewModel
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import io.github.jan.supabase.auth.providers.builtin.Email
-import kotlinx.coroutines.launch
-import kotlin.time.Duration
 
 @Composable
 fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
@@ -189,7 +181,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel) {
                                     } catch (e: Exception) {
                                         Toast.makeText(
                                             context,
-                                            "Error al loguearse",
+                                            "Correo y/o contraseña incorrectos",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }

@@ -62,8 +62,6 @@ import com.example.frontendtt.states.EditarViajeState
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalTime
-import java.time.Duration
 
 @Composable
 fun EditarViajeScreen(navController: NavController, viajeId: Int) {
@@ -193,7 +191,6 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
             FormularioDestinoDialog(
                 destinoExistente = destinoAEditar,
                 onDismiss = { mostrarFormulario = false },
-                onSave = { mostrarFormulario = false },
                 viajeId = viajeId,
                 editarViajeViewModel = editarViajeViewModel,
                 editarViajeState = editarViajeState
@@ -252,7 +249,6 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
 fun FormularioDestinoDialog(
     destinoExistente: EtapaConDestino?,
     onDismiss: () -> Unit,
-    onSave: () -> Unit,
     viajeId: Int,
     editarViajeViewModel : EditarViajeViewModel,
     editarViajeState: EditarViajeState
@@ -492,7 +488,9 @@ fun FormularioDestinoDialog(
                                                     selectedGeoPoint = userPoint
                                                 }
                                             }
-                                        } catch (e: SecurityException) {}
+                                        } catch (e: SecurityException) {
+                                            e.printStackTrace()
+                                        }
                                     }
 
                                     val eventsOverlay = MapEventsOverlay(object : MapEventsReceiver {

@@ -51,48 +51,7 @@ class MenuViewModel: ViewModel () {
         }
 
     }
-    suspend fun buscarDestinos2(
-        fechainicio: String?,
-        fechafin: String?,
-        coordy: Double,
-        coordx: Double,
-        distancia: Double
-    ){
-        listaDestinosState = buscarEtapasConDestinoYViaje(fechainicio, fechafin)
-        if (coordx == 0.0) {
-            listaFiltradaState = listaDestinosState
-            Log.d ("Sin coordenadas", listaFiltradaState.size.toString())
-        } else {
-            listaDestinosState.filter { etapa ->
-                val distanciaPuntos = calcularDistancia(
-                    lat1 = coordy,
-                    lon1 = coordx,
-                    lat2 = etapa.destino.coordy,
-                    lon2 = etapa.destino.coordx
-                )
-                distanciaPuntos <= distancia
-            }
-            Log.d ("Con coordenadas", listaFiltradaState.size.toString())
-        }
 
-
-    }
-    fun buscarDestinos3(fechainicio: String?, fechafin: String?, coordy: Double, coordx: Double, distancia:Double): List<EtapaConDetalles> {
-        viewModelScope.launch {
-            listaDestinosState = buscarEtapasConDestinoYViaje(fechainicio, fechafin)
-            listaFiltradaState = listaDestinosState.filter { etapa ->
-                val distanciaPuntos = calcularDistancia(
-                    lat1 = coordy, // coordy
-                    lon1 = coordx, // coordx
-                    lat2 = etapa.destino.coordy,
-                    lon2 = etapa.destino.coordx
-                )
-                distanciaPuntos <= distancia
-            }
-
-        }
-        return listaDestinosState
-    }
     fun closeSession(){
         viewModelScope.launch {
             cerrarSesion()

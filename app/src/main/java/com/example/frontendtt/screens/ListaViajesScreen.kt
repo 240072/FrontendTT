@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
 
-import android.util.Log
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,20 +25,10 @@ import androidx.navigation.NavController
 import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.ListaViajesViewModel
-import com.example.frontendtt.viewmodels.LoginViewModel
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
-
-/* ---------------------------------------------------- */
-/* 🧳 MODELO DE DATOS */
-/* ---------------------------------------------------- */
-data class UserTrip(
-    val id: Int,
-    val nombre: String,
-    val descripcion: String
-)
 
 @Composable
 fun ListaViajesScreen(navController: NavController) {
@@ -49,16 +39,6 @@ fun ListaViajesScreen(navController: NavController) {
     }
 
     val viajes = listaViajesViewModel.viajesState
-    var listaViajes by remember {
-        mutableStateOf(
-            listOf(
-                UserTrip(1, "Crucero por el Mediterráneo", "Explorando las islas griegas y costas italianas."),
-                UserTrip(2, "Senderismo en los Alpes", "Ruta de 7 días por los picos más altos de Europa."),
-                UserTrip(3, "Safari en Kenia", "Aventura salvaje observando a los cinco grandes."),
-                UserTrip(4, "Tokio y Kioto", "Inmersión cultural en el corazón de Japón.")
-            )
-        )
-    }
     val userId = supabase.auth.currentUserOrNull()?.id
     var viajeAEliminar by remember { mutableStateOf<ListaViajes?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }

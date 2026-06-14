@@ -35,7 +35,6 @@ import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
-import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

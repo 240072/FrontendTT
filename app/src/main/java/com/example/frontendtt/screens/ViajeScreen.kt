@@ -23,7 +23,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontendtt.components.DestinoItem
 import com.example.frontendtt.components.SectionHeader
-import com.example.frontendtt.data.Destino
 import com.example.frontendtt.data.Dificultad.opcionesDificultad
 import com.example.frontendtt.data.EtapaDetalle
 import com.example.frontendtt.data.UnirParticipacion
@@ -207,7 +206,7 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
             title = { Text(destino.destino.nombre, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    destino.destino.descripcion?.let { Text(it) }
+                    destino.destino.descripcion.let { Text(it) }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = Color.Gray.copy(alpha = 0.2f))
                     Row { Text("Horario: ", fontWeight = FontWeight.Bold); Text("${destino.horainicio} - ${destino.horafin}")}
                     Row { Text("Ubicación: ", fontWeight = FontWeight.Bold); Text(destino.destino.ubicacion) }

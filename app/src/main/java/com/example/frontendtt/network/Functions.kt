@@ -16,7 +16,6 @@ import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.data.UsuarioNombre
 import com.example.frontendtt.data.Viaje
 import com.example.traveltogethersupabase.data.NuevoViaje
-import com.example.traveltogethersupabase.data.RegistroUsuario
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
@@ -24,15 +23,6 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 
-suspend fun enviarRegistro(usuario: RegistroUsuario) {
-    try {
-        supabase.from("usuario").insert(usuario)
-        // Si llegas aquí, se envió correctamente
-    } catch (e: Exception) {
-        e.printStackTrace()
-        // Aquí podrías manejar el error (ej. falta de internet)
-    }
-}
 suspend fun unirseViaje(usuario: UnirParticipacion){
     supabase.from("participacion").insert(usuario)
 }
@@ -250,21 +240,7 @@ suspend fun borrarViaje(id: Int) {
             }
         }
 }
-suspend fun verificarSiAliasExiste(alias: String): Boolean {
-    return try {
-        // Hacemos una consulta rápida buscando si alguien tiene ese alias
-        val resultado = supabase.from("usuario")
-            .select {
-                filter {
-                    eq("alias", alias)
-                }
-            }
-        // Si la lista no está vacía, es que el alias ya existe
-        resultado.data != "[]"
-    } catch (e: Exception) {
-        false // Si falla la consulta, asumimos que no existe o lo manejará el registro
-    }
-}
+
 suspend fun eliminarEtapa(id: Int) {
 
     supabase.postgrest["etapa"].delete {
@@ -285,22 +261,7 @@ suspend fun obtenerDestinosPorDia(idViaje: Int,diaviaje: Int): List<EtapaConDest
         .decodeList<EtapaConDestino>()
 
 }
-suspend fun actualizarDestino(destino: Destino) {
-    supabase.from("destino")
-        .update(destino) {
-            filter {
-                eq("id", destino.id)
-            }
-        }
-}
-suspend fun actualizarEtapa(etapa: Etapa) {
-    supabase.from("etapa")
-        .update(etapa) {
-            filter {
-                eq("id", etapa.id)
-            }
-        }
-}
+
 suspend fun borrarParticipacion(idusuario: String,idviaje: Int) {
     supabase
         .postgrest["participacion"]

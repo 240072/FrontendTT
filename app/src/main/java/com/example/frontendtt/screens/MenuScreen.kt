@@ -39,9 +39,7 @@ import androidx.navigation.NavController
 import com.example.frontendtt.R
 import com.example.frontendtt.components.showDatePicker
 import com.example.frontendtt.ui.theme.*
-import com.example.frontendtt.viewmodels.LoginViewModel
 import com.example.frontendtt.viewmodels.MenuViewModel
-import com.example.traveltogethersupabase.network.cerrarSesion
 import com.google.android.gms.location.LocationServices
 import com.iessanalberto.dam2.gestionies.navigation.AppScreens
 import kotlinx.coroutines.Dispatchers
@@ -55,9 +53,8 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun MenuScreen(navController: NavController) {
@@ -66,8 +63,6 @@ fun MenuScreen(navController: NavController) {
     val menuState by menuViewModel.menuState.collectAsState()
     val context = LocalContext.current
 
-    var startDate by remember { mutableStateOf<String?>(null) }
-    var endDate by remember { mutableStateOf<String?>(null) }
     var locationFilter by remember { mutableStateOf("") }
     
     var showLocationDialog by remember { mutableStateOf(false) }
@@ -82,12 +77,10 @@ fun MenuScreen(navController: NavController) {
             isFirstTime = false
             return@LaunchedEffect
         }
-        delay(500L)
-        Log.d("Probando", menuState.coordx.toString())
-        Log.d("Probando", menuState.distancia.toString())
+        delay(500L.milliseconds)
 
              menuViewModel.buscarDestinos(menuState.fechainicio, menuState.fechafin, menuState.coordy,menuState.coordx, menuState.distancia)
-Log.d("Probando",allTrips.toString())
+
 
 
 
@@ -443,7 +436,9 @@ Log.d("Probando",allTrips.toString())
                                                 selectedGeoPoint = userPoint
                                             }
                                         }
-                                    } catch (e: SecurityException) {}
+                                    } catch (e: SecurityException) {
+                                        e.printStackTrace()
+                                    }
                                 }
 
                                 // Listener para cuando el usuario toca manualmente cualquier punto del mapa

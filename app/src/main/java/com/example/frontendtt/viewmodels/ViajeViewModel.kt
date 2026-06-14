@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.frontendtt.data.DetalleViaje
 import com.example.frontendtt.data.EtapaDetalle
-import com.example.frontendtt.data.ListaViajes
 import com.example.frontendtt.data.UnirParticipacion
 import com.example.frontendtt.data.UsuarioNombre
 import com.example.traveltogethersupabase.network.getDetallesViaje

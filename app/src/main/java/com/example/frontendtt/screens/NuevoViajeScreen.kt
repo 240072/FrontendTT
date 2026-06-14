@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.example.frontendtt.screens
 
-import android.util.Log
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -50,6 +50,7 @@ fun NuevoViajeScreen(navController: NavController) {
     val user = supabase.auth.currentUserOrNull()
     val uuid = user?.id
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
 
     var expanded by remember { mutableStateOf(false) }
@@ -174,9 +175,15 @@ fun NuevoViajeScreen(navController: NavController) {
                         Column {
                             Text("Selecciona fechas", fontWeight = FontWeight.Bold, color = TravelPrimaryBlue, style = MaterialTheme.typography.titleMedium)
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(if (tripState.fechaInicio.toString() == null) "Inicio" else tripState.fechaInicio.toString(), color = if (tripState.fechaInicio == null) Color.Gray else TravelEarth)
+                                Text(
+                                    text = tripState.fechaInicio?.toString() ?: "Inicio",
+                                    color = if (tripState.fechaInicio == null) Color.Gray else TravelEarth
+                                )
                                 Icon(painter = painterResource(id = android.R.drawable.ic_media_play), contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.Gray)
-                                Text(tripState.fechaFin.toString() ?: "Fin", color = if (tripState.fechaFin == null) Color.Gray else TravelEarth)
+                                Text(
+                                    text = tripState.fechaFin?.toString() ?: "Fin",
+                                    color = if (tripState.fechaFin == null) Color.Gray else TravelEarth
+                                )
                             }
                         }
                     }
@@ -196,7 +203,7 @@ fun NuevoViajeScreen(navController: NavController) {
                         tripState.mascota
                     )
                     val id =registrarViaje(insertarViaje)
-                    Log.d("Registro", id.toString())
+                     scope.launch { snackbarHostState.showSnackbar("Se ha creado el viaje") }
 
                     navController.navigate(AppScreens.EditarViajeScreen.route.replace("{viajeId}", id.toString()))
 

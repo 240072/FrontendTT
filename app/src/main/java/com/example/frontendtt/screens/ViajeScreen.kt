@@ -31,27 +31,7 @@ import com.example.frontendtt.ui.theme.*
 import com.example.frontendtt.viewmodels.ViajeViewModel
 import com.example.traveltogethersupabase.network.SupabaseClient.supabase
 import io.github.jan.supabase.auth.auth
-
-/* -----------------------------------------------------------------------------
-    MODELOS DE DATOS
------------------------------------------------------------------------------ */
-
-data class TripInfo(
-    val nombre: String,
-    val descripcion: String,
-    val fechaInicio: String,
-    val fechaFin: String
-)
-
-data class Participante(val id: Int, val alias: String)
-
-// data class Destino(
-//     val nombre: String,
-//     val descripcion: String,
-//     val hora: String,
-//     val ubicacion: String,
-//     val dificultad: String
-// )
+import kotlinx.coroutines.launch
 
 @Composable
 fun ViajeScreen(viajeId: Int, navController: NavController) {
@@ -72,19 +52,12 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
     val viaje = viajeViewModel.viajeState
 
 
-    //val viaje = TripInfo(nombre = "Expedición Pirineos 2024", descripcion = "Una aventura épica cruzando los valles más profundos y las cimas más altas. Preparados para la libertad.", fechaInicio = "15 Ago 2024", fechaFin = "22 Ago 2024")
-
-    //val participantes = listOf(Participante(1, "Álex Aventurero"),Participante(2, "Marta Maps"), Participante(3, "Dani Cimas"), Participante(4, "Sofía Trekking"))
-
-    // val destinos = listOf(
-    //     Destino("Valle de Ordesa", "Parque Nacional con cascadas impresionantes.", "09:00 - 18:00", "Torla, Huesca", "Media"),
-    //     Destino("Monte Perdido", "Ascensión mítica a más de 3000m.", "06:00 - 20:00", "Fanlo, Huesca", "Alta"),
-    //     Destino("Ainsa", "Pueblo medieval perfecto para descansar.", "11:00 - 14:00", "Ainsa, Huesca", "Baja")
-    // )
 
     var destinoSeleccionado by remember { mutableStateOf<EtapaDetalle?>(null) }
     val scrollState = rememberScrollState()
-    //val currentUserAlias = "AventureroInvitado"
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember {SnackbarHostState()}
+
 
 
     //val yaParticipa = participantes.any { it.id == userId }
@@ -145,7 +118,8 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                 /* 🔘 BOTÓN UNIRME */
                 if (!viajeViewModel.yaParticipa) {
                     Button(
-                        onClick = { viajeViewModel.joinTrip(UnirParticipacion(miUserId!!,viajeId)) },
+                        onClick = { viajeViewModel.joinTrip(UnirParticipacion(miUserId!!,viajeId))
+                        scope.launch { snackbarHostState.showSnackbar("Te has unido al viaje") }},
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = TravelPrimaryBlue)

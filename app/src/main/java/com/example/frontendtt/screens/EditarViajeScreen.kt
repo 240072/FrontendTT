@@ -77,6 +77,7 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
     var destinoAEliminar by remember { mutableStateOf<EtapaConDestino?>(null) }
     var destinoAVer by remember { mutableStateOf<EtapaConDestino?>(null) }
 
+
     LaunchedEffect(viajeId) {
         editarViajeViewModel.getTripInfo(viajeId)
     }
@@ -175,7 +176,8 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                 }
 
                 Button(
-                    onClick = { navController.navigate(AppScreens.MenuScreen.route) },
+                    onClick = { scope.launch { snackbarHostState.showSnackbar("Viaje guardado") }
+                        navController.navigate(AppScreens.MenuScreen.route) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = TravelDeepNavy)
@@ -259,6 +261,8 @@ fun FormularioDestinoDialog(
     var showFinPicker by remember { mutableStateOf(false) }
     var showLocationDialog by remember { mutableStateOf(false) }
     var searchLocationText by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope ()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier = Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -324,6 +328,7 @@ fun FormularioDestinoDialog(
                             val destino = NuevoDestino(editarViajeState.nombre, editarViajeState.ubicacion, editarViajeState.descripcion, editarViajeState.coordx, editarViajeState.coordy, editarViajeState.dificultad)
                             val etapa = NuevaEtapa(idviaje = viajeId, horainicio = editarViajeState.horainicio, horafin = editarViajeState.horafin, diaviaje = editarViajeState.diaviaje)
                             editarViajeViewModel.insertDestination(destino, etapa, viajeId, editarViajeState.diaviaje)
+                            scope.launch { snackbarHostState.showSnackbar("Destino agregado correctamente") }
                         } else {
                             // ACTUALIZAR EXISTENTE
                             editarViajeViewModel.updateDestination(
@@ -339,7 +344,10 @@ fun FormularioDestinoDialog(
                                 viajeId = viajeId,
                                 diaActual = editarViajeState.diaviaje
                             )
+                            scope.launch { snackbarHostState.showSnackbar("Cambios guardados") }
                         }
+
+
                         onDismiss()
                     },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),

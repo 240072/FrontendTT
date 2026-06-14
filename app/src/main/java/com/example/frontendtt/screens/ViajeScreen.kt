@@ -207,8 +207,8 @@ fun ViajeScreen(viajeId: Int, navController: NavController) {
                     etapas.forEach { destino ->
                         DestinoItem(
                             nombre = destino.destino.nombre,
-                            hora = destino.horainicio,
-                            ubicacion = destino.destino.coordx.toString(),
+                            hora = "${destino.horainicio} - ${destino.horafin}",
+                            ubicacion = destino.destino.ubicacion,
                             onClick = { destinoSeleccionado =
                                 destino
                             }

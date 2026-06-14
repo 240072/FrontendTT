@@ -154,7 +154,7 @@ fun EditarViajeScreen(navController: NavController, viajeId: Int) {
                     items(editarViajeViewModel.etapasPorDiaState) { destino ->
                         DestinoItem(
                             nombre = destino.destino.nombre,
-                            hora = destino.horainicio,
+                            hora = "${destino.horainicio} - ${destino.horafin}",
                             ubicacion = destino.destino.ubicacion,
                             onEdit = { destinoAEditar = destino; mostrarFormulario = true },
                             onDelete = { destinoAEliminar = destino },

@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -126,11 +127,41 @@ fun ListaViajesScreen(navController: NavController) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     viaje.descripcion?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray) }
                                 }
-                                IconButton(
-                                    onClick = { viajeAEliminar = viaje },
-                                    modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
+                                Row(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre botones
                                 ) {
-                                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red.copy(alpha = 0.7f))
+                                    if (userId == viaje.idcreador) {
+                                        IconButton(
+                                            onClick = {
+                                                navController.navigate(
+                                                    AppScreens.EditarViajeScreen.route.replace(
+                                                        "{viajeId}",
+                                                        viaje.id.toString()
+                                                    )
+                                                )
+                                            },
+
+                                            ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Edit,
+                                                contentDescription = "Editar",
+                                                tint = Color.Red.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { viajeAEliminar = viaje },
+
+                                        ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = Color.Red.copy(alpha = 0.7f)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -143,11 +174,11 @@ fun ListaViajesScreen(navController: NavController) {
             AlertDialog(
                 onDismissRequest = { viajeAEliminar = null },
                 title = { Text("¿Abandonar viaje?") },
-                text = { Text("¿Estás seguro de que quieres abandonar el viaje \"${viajeAEliminar?.nombre}\"?") },
+                text = { Text(if (userId == viajeAEliminar?.idcreador)"¿Estás seguro de que quieres eliminar el viaje \"${viajeAEliminar?.nombre}\"?" else "¿Estás seguro de que quieres abandonar el viaje \"${viajeAEliminar?.nombre}\"?") },
                 confirmButton = {
                     TextButton(onClick = {
-                        //val nombreViaje = viajeAEliminar?.nombre
-                        //listaViajes = listaViajes.filter { it.id != viajeAEliminar?.id }
+                        val nombreViaje = viajeAEliminar?.nombre
+
                         if (userId == viajeAEliminar?.idcreador) {
                             listaViajesViewModel.deleteTrip(viajeAEliminar?.id ?: 0)
                         } else {
@@ -155,7 +186,7 @@ fun ListaViajesScreen(navController: NavController) {
                                 viajeAEliminar?.id ?: 0
                             )
                         }
-                        scope.launch { snackbarHostState.showSnackbar("Has abandonado el viaje $viajeAEliminar?.nombre") }
+                        scope.launch { snackbarHostState.showSnackbar("Has abandonado el viaje $nombreViaje") }
                         viajeAEliminar = null
                     }) { Text("Confirmar", color = Color.Red) }
                 },

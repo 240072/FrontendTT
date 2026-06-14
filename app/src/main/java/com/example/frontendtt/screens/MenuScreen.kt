@@ -59,43 +59,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Locale
 
-/* ---------------------------------------------------- */
-/* 🧳 MODELO VIAJE DEMO */
-/* ---------------------------------------------------- */
-
-// data class Trip(val title: String, val location: String, val dateStart: Long, val dateEnd: Long)
-
-// fun getTrips(start: String?, end: String?, locationFilter: String): List<Trip> {
-//     val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-//     val today = System.currentTimeMillis()
-//     val dayInMs = 24 * 60 * 60 * 1000L
-
-//     val allTrips = listOf(
-//         Trip("Escapada Montaña", "Pirineos", today - 10 * dayInMs, today - 5 * dayInMs),
-//         Trip("Ruta Costera", "Costa Mediterránea", today + 2 * dayInMs, today + 7 * dayInMs),
-//         Trip("Aventura Natural", "Asturias", today - 1 * dayInMs, today + 4 * dayInMs),
-//         Trip("Nieve y Sol", "Sierra Nevada", today + 20 * dayInMs, today + 25 * dayInMs),
-//         Trip("Ruta Gastronómica", "Galicia", today + 5 * dayInMs, today + 10 * dayInMs)
-//     )
-
-//     val filterStart = start?.let { try { sdf.parse(it)?.time } catch (e: Exception) { null } }
-//     val filterEnd = end?.let { try { sdf.parse(it)?.time } catch (e: Exception) { null } }
-
-//     return allTrips.filter { trip ->
-//         val matchesLocation = locationFilter.isBlank() || trip.location.contains(locationFilter, ignoreCase = true)
-//         val matchesDate = if (filterStart != null && filterEnd != null) {
-//             trip.dateStart <= filterEnd && trip.dateEnd >= filterStart
-//         } else {
-//             trip.dateEnd >= today
-//         }
-//         matchesLocation && matchesDate
-//     }
-// }
-
-/* ---------------------------------------------------- */
-/* 🌍 SCREEN PRINCIPAL */
-/* ---------------------------------------------------- */
-
 @Composable
 fun MenuScreen(navController: NavController) {
 
@@ -109,19 +72,25 @@ fun MenuScreen(navController: NavController) {
     
     var showLocationDialog by remember { mutableStateOf(false) }
     var searchLocationText by remember { mutableStateOf("") }
-    var rangeKm by remember { mutableDoubleStateOf(1.0) }
-    var allTrips = menuViewModel.listaFiltradaState
+    var isFirstTime by remember { mutableStateOf(true) }
+    val allTrips = menuViewModel.listaFiltradaState
 
-    //val trips = remember(startDate, endDate, locationFilter) {getTrips(startDate, endDate, locationFilter)}
+
     LaunchedEffect(menuState.fechainicio, menuState.fechafin,  menuState.coordx, menuState.coordy, menuState.distancia) {
-        delay(500L)
-        // Validación previa para no buscar con campos vacíos
-        if (menuState.coordx != 0.0) {
-            allTrips = menuViewModel.buscarDestinos(menuState.fechainicio, menuState.fechafin, menuState.coordy,menuState.coordx, menuState.distancia)
 
-
-
+        if (isFirstTime) {
+            isFirstTime = false
+            return@LaunchedEffect
         }
+        delay(500L)
+        Log.d("Probando", menuState.coordx.toString())
+        Log.d("Probando", menuState.distancia.toString())
+
+             menuViewModel.buscarDestinos(menuState.fechainicio, menuState.fechafin, menuState.coordy,menuState.coordx, menuState.distancia)
+Log.d("Probando",allTrips.toString())
+
+
+
     }
 
     Scaffold(

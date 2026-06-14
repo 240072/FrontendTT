@@ -1,5 +1,6 @@
 package com.example.frontendtt.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -26,7 +27,57 @@ class MenuViewModel: ViewModel () {
         private set
     var listaFiltradaState by mutableStateOf<List<EtapaConDetalles>>(emptyList())
         private set
-    fun buscarDestinos(fechainicio: String?, fechafin: String?, coordy: Double, coordx: Double, distancia:Double): List<EtapaConDetalles> {
+    fun buscarDestinos(fechainicio: String?, fechafin: String?, coordy: Double, coordx: Double, distancia:Double) {
+        viewModelScope.launch {
+            listaDestinosState = buscarEtapasConDestinoYViaje(fechainicio, fechafin)
+
+            if (coordx == 0.0) {
+                // Si la coordenada es 0.0, saltamos el cálculo y asignamos la lista completa
+                listaFiltradaState = listaDestinosState
+                Log.d ("Sin coordenadas", listaFiltradaState.size.toString())
+            } else {
+                listaFiltradaState = listaDestinosState.filter { etapa ->
+
+                    val distanciaPuntos = calcularDistancia(
+                        lat1 = coordy, // coordy
+                        lon1 = coordx, // coordx
+                        lat2 = etapa.destino.coordy,
+                        lon2 = etapa.destino.coordx
+                    )
+                    distanciaPuntos <= distancia
+                }
+                Log.d ("Con coordenadas", listaFiltradaState.size.toString())
+            }
+        }
+
+    }
+    suspend fun buscarDestinos2(
+        fechainicio: String?,
+        fechafin: String?,
+        coordy: Double,
+        coordx: Double,
+        distancia: Double
+    ){
+        listaDestinosState = buscarEtapasConDestinoYViaje(fechainicio, fechafin)
+        if (coordx == 0.0) {
+            listaFiltradaState = listaDestinosState
+            Log.d ("Sin coordenadas", listaFiltradaState.size.toString())
+        } else {
+            listaDestinosState.filter { etapa ->
+                val distanciaPuntos = calcularDistancia(
+                    lat1 = coordy,
+                    lon1 = coordx,
+                    lat2 = etapa.destino.coordy,
+                    lon2 = etapa.destino.coordx
+                )
+                distanciaPuntos <= distancia
+            }
+            Log.d ("Con coordenadas", listaFiltradaState.size.toString())
+        }
+
+
+    }
+    fun buscarDestinos3(fechainicio: String?, fechafin: String?, coordy: Double, coordx: Double, distancia:Double): List<EtapaConDetalles> {
         viewModelScope.launch {
             listaDestinosState = buscarEtapasConDestinoYViaje(fechainicio, fechafin)
             listaFiltradaState = listaDestinosState.filter { etapa ->

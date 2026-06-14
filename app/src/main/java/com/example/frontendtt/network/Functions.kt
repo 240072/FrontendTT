@@ -93,9 +93,9 @@ suspend fun buscarEtapasConDestinoYViaje(
     val columnasASeleccionar = """
         id,
         horainicio,
-        duracion,
+        horafin,
         destino (
-            id, nombre, coordx, coordy, dificultad
+            id, nombre, ubicacion, coordx, coordy, dificultad
         ),
         viaje!inner (
             id, nombre, fechainicio, fechafin
@@ -122,7 +122,7 @@ suspend fun buscarEtapasConDestinoYViaje(
 
         }
     }
-
+    Log.d("coordenadas", respuesta.decodeList<EtapaConDetalles>().toString())
     // 4. Parseamos el resultado a objetos de Kotlin
     return respuesta.decodeList<EtapaConDetalles>()
 }
